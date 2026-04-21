@@ -534,7 +534,7 @@ export default function App() {
 
   function commitWolvesAndNext() {
     setPlayers((prev) =>
-      prev.map((p) => {
+      prev.map((p): Player => {
         if (selectedWolfIds.includes(p.id)) return { ...p, role: '狼人' };
         if (p.role === '狼人') return { ...p, role: null };
         return p;
@@ -545,15 +545,18 @@ export default function App() {
 
   function commitSeerAndNext() {
     if (draftSeerOwnerId === null) return;
-
+  
     const nextPhase = getNextFirstNightPhase(config, 'first-night-seer');
-    const nextPlayers = players.map((p) => {
-      if (p.role === '预言家' && p.id !== draftSeerOwnerId)
+    const nextPlayers: Player[] = players.map((p): Player => {
+      if (p.role === '预言家' && p.id !== draftSeerOwnerId) {
         return { ...p, role: null };
-      if (p.id === draftSeerOwnerId) return { ...p, role: '预言家' };
+      }
+      if (p.id === draftSeerOwnerId) {
+        return { ...p, role: '预言家' };
+      }
       return p;
     });
-
+  
     if (nextPhase === 'day-result') {
       setPlayers(finalizeUnassignedVillagers(nextPlayers));
       setSeerOwnerId(draftSeerOwnerId);
@@ -561,7 +564,7 @@ export default function App() {
       setPhase('day-result');
       return;
     }
-
+  
     setPlayers(nextPlayers);
     setSeerOwnerId(draftSeerOwnerId);
     setPhase(nextPhase);
@@ -569,15 +572,18 @@ export default function App() {
 
   function commitWitchAndNext() {
     if (draftWitchOwnerId === null) return;
-
+  
     const nextPhase = getNextFirstNightPhase(config, 'first-night-witch');
-    const nextPlayers = players.map((p) => {
-      if (p.role === '女巫' && p.id !== draftWitchOwnerId)
+    const nextPlayers: Player[] = players.map((p): Player => {
+      if (p.role === '女巫' && p.id !== draftWitchOwnerId) {
         return { ...p, role: null };
-      if (p.id === draftWitchOwnerId) return { ...p, role: '女巫' };
+      }
+      if (p.id === draftWitchOwnerId) {
+        return { ...p, role: '女巫' };
+      }
       return p;
     });
-
+  
     if (nextPhase === 'day-result') {
       setPlayers(finalizeUnassignedVillagers(nextPlayers));
       setWitchOwnerId(draftWitchOwnerId);
@@ -585,7 +591,7 @@ export default function App() {
       setPhase('day-result');
       return;
     }
-
+  
     setPlayers(nextPlayers);
     setWitchOwnerId(draftWitchOwnerId);
     setPhase(nextPhase);
@@ -593,15 +599,18 @@ export default function App() {
 
   function commitGuardAndNext() {
     if (draftGuardOwnerId === null) return;
-
+  
     const nextPhase = getNextFirstNightPhase(config, 'first-night-guard');
-    const nextPlayers = players.map((p) => {
-      if (p.role === '守卫' && p.id !== draftGuardOwnerId)
+    const nextPlayers: Player[] = players.map((p): Player => {
+      if (p.role === '守卫' && p.id !== draftGuardOwnerId) {
         return { ...p, role: null };
-      if (p.id === draftGuardOwnerId) return { ...p, role: '守卫' };
+      }
+      if (p.id === draftGuardOwnerId) {
+        return { ...p, role: '守卫' };
+      }
       return p;
     });
-
+  
     if (nextPhase === 'day-result') {
       setPlayers(finalizeUnassignedVillagers(nextPlayers));
       setGuardOwnerId(draftGuardOwnerId);
@@ -609,7 +618,7 @@ export default function App() {
       setPhase('day-result');
       return;
     }
-
+  
     setPlayers(nextPlayers);
     setGuardOwnerId(draftGuardOwnerId);
     setPhase(nextPhase);
@@ -617,14 +626,17 @@ export default function App() {
 
   function commitHunterAndNext() {
     if (draftHunterOwnerId === null) return;
-
-    const nextPlayers = players.map((p) => {
-      if (p.role === '猎人' && p.id !== draftHunterOwnerId)
+  
+    const nextPlayers: Player[] = players.map((p): Player => {
+      if (p.role === '猎人' && p.id !== draftHunterOwnerId) {
         return { ...p, role: null };
-      if (p.id === draftHunterOwnerId) return { ...p, role: '猎人' };
+      }
+      if (p.id === draftHunterOwnerId) {
+        return { ...p, role: '猎人' };
+      }
       return p;
     });
-
+  
     setPlayers(finalizeUnassignedVillagers(nextPlayers));
     setHunterOwnerId(draftHunterOwnerId);
     setFirstNightDone(true);
