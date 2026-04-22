@@ -32,6 +32,11 @@ type Props = {
   // 状态
   dayApplied: boolean;
 
+  whiteWolfKingOwnerId: number | null;
+  canWhiteWolfKingExplode: boolean;
+
+  onStartWhiteWolfKingExplode: () => void;
+
   // 操作
   onBack: () => void;
   onApplyDayResult: () => void;
@@ -49,6 +54,8 @@ function roleToEnglish(role: Player['role']) {
   switch (role) {
     case '狼人':
       return 'Wolf';
+    case '白狼王':
+      return 'White Wolf King';
     case '预言家':
       return 'Seer';
     case '女巫':
@@ -78,11 +85,15 @@ export default function DayResultScreen({
   voteApplied,
   dayApplied,
 
+  whiteWolfKingOwnerId,
+  canWhiteWolfKingExplode,
+
   onBack,
   onApplyDayResult,
   onGoToVote,
   onApplyVote,
   onStartNextNight,
+  onStartWhiteWolfKingExplode,
   onReset,
 }: Props) {
   const getSeat = (id: number | null) => {
@@ -152,6 +163,16 @@ export default function DayResultScreen({
           );
         })}
       </div>
+
+      {canWhiteWolfKingExplode && (
+        <div style={styles.whiteWolfKingBox}>
+          <Bilingual
+            zh="当前白狼王仍存活，可在进入投票前选择自爆并带走一名玩家。"
+            en="The White Wolf King is still alive and may explode before voting to take one player down."
+            small
+          />
+        </div>
+      )}
 
       {/* 按钮区 */}
       <div style={styles.actionRow}>
@@ -229,6 +250,17 @@ export default function DayResultScreen({
                   small
                 />
               </div>
+
+              {canWhiteWolfKingExplode &&
+                player.id === whiteWolfKingOwnerId &&
+                player.alive && (
+                  <button
+                    style={styles.explodeButton}
+                    onClick={onStartWhiteWolfKingExplode}
+                  >
+                    <Bilingual zh="自爆" en="Explode" small />
+                  </button>
+                )}
             </div>
           ))}
         </div>
@@ -317,5 +349,23 @@ const styles: Record<string, CSSProperties> = {
     padding: '6px 10px',
     borderRadius: 999,
     fontSize: 12,
+  },
+  whiteWolfKingBox: {
+    marginTop: 16,
+    padding: 14,
+    borderRadius: 14,
+    background: '#fff7ed',
+    color: '#9a3412',
+    border: '1px solid #fdba74',
+  },
+  explodeButton: {
+    border: 'none',
+    background: '#b91c1c',
+    color: '#fff',
+    padding: '8px 12px',
+    borderRadius: 10,
+    cursor: 'pointer',
+    fontWeight: 700,
+    marginLeft: 'auto',
   },
 };

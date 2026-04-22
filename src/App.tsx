@@ -32,6 +32,9 @@ import NightWolfScreen from './screens/NightWolfScreen';
 
 import HunterShootScreen from './screens/HunterShootScreen';
 
+import FirstNightWhiteWolfKingScreen from './screens/FirstNightWhiteWolfKingScreen';
+import WhiteWolfKingExplodeScreen from './screens/WhiteWolfKingExplodeScreen';
+
 import { isGod, isWolf, isVillager } from './utils/roleUtils';
 
 const STORAGE_KEY = 'wolf-judge-assistant-vote-split-v2';
@@ -156,6 +159,12 @@ export default function App() {
   const [selectedWolfIds, setSelectedWolfIds] = useState<number[]>([]);
   const [wolfTargetId, setWolfTargetId] = useState<number | null>(null);
 
+  const [whiteWolfKingOwnerId, setWhiteWolfKingOwnerId] = useState<number | null>(null);
+  const [draftWhiteWolfKingOwnerId, setDraftWhiteWolfKingOwnerId] = useState<number | null>(null);
+
+  const [whiteWolfKingExploded, setWhiteWolfKingExploded] = useState(false);
+  const [whiteWolfKingExplodeTargetId, setWhiteWolfKingExplodeTargetId] = useState<number | null>(null);
+
   const [seerOwnerId, setSeerOwnerId] = useState<number | null>(null);
   const [draftSeerOwnerId, setDraftSeerOwnerId] = useState<number | null>(null);
   const [seerCheckId, setSeerCheckId] = useState<number | null>(null);
@@ -233,6 +242,11 @@ export default function App() {
       );
       setWolfTargetId(data.wolfTargetId ?? null);
 
+      setWhiteWolfKingOwnerId(data.whiteWolfKingOwnerId ?? null);
+      setDraftWhiteWolfKingOwnerId(data.draftWhiteWolfKingOwnerId ?? null);
+      setWhiteWolfKingExploded(Boolean(data.whiteWolfKingExploded));
+      setWhiteWolfKingExplodeTargetId(data.whiteWolfKingExplodeTargetId ?? null);
+
       setSeerOwnerId(data.seerOwnerId ?? null);
       setDraftSeerOwnerId(data.draftSeerOwnerId ?? null);
       setSeerCheckId(data.seerCheckId ?? null);
@@ -284,6 +298,11 @@ export default function App() {
         selectedWolfIds,
         wolfTargetId,
 
+        whiteWolfKingOwnerId,
+        draftWhiteWolfKingOwnerId,
+        whiteWolfKingExploded,
+        whiteWolfKingExplodeTargetId,
+
         seerOwnerId,
         draftSeerOwnerId,
         seerCheckId,
@@ -327,6 +346,10 @@ export default function App() {
     firstNightDone,
     selectedWolfIds,
     wolfTargetId,
+    whiteWolfKingOwnerId,
+    draftWhiteWolfKingOwnerId,
+    whiteWolfKingExploded,
+    whiteWolfKingExplodeTargetId,
     seerOwnerId,
     draftSeerOwnerId,
     seerCheckId,
@@ -384,6 +407,29 @@ export default function App() {
 
   const hunterShootTargets = alivePlayers.filter(
     (p) => hunterPlayer !== null && p.id !== hunterPlayer.id
+  );
+
+  const whiteWolfKingPlayer =
+    whiteWolfKingOwnerId !== null
+      ? players.find((p) => p.id === whiteWolfKingOwnerId) ?? null
+      : players.find((p) => p.role === '白狼王') ?? null;
+
+  const aliveWhiteWolfKing =
+    whiteWolfKingPlayer !== null && whiteWolfKingPlayer.alive;
+
+  const canWhiteWolfKingExplode =
+    phase === 'day-result' &&
+    dayApplied &&
+    !gameOver &&
+    aliveWhiteWolfKing &&
+    !whiteWolfKingExploded;
+
+  const selectableWhiteWolfKingPlayers = players.filter(
+    (p) => p.role === '狼人' || p.role === '白狼王'
+  );
+
+  const whiteWolfKingExplodeTargets = alivePlayers.filter(
+    (p) => whiteWolfKingPlayer !== null && p.id !== whiteWolfKingPlayer.id
   );
 
   const selectableForSingleGod = useMemo(
@@ -467,6 +513,11 @@ export default function App() {
     setSelectedWolfIds([]);
     setWolfTargetId(null);
 
+    setWhiteWolfKingOwnerId(null);
+    setDraftWhiteWolfKingOwnerId(null);
+    setWhiteWolfKingExploded(false);
+    setWhiteWolfKingExplodeTargetId(null);
+
     setSeerOwnerId(null);
     setDraftSeerOwnerId(null);
     setSeerCheckId(null);
@@ -512,6 +563,11 @@ export default function App() {
     setSelectedWolfIds([]);
     setWolfTargetId(null);
 
+    setWhiteWolfKingOwnerId(null);
+    setDraftWhiteWolfKingOwnerId(null);
+    setWhiteWolfKingExploded(false);
+    setWhiteWolfKingExplodeTargetId(null);
+
     setSeerOwnerId(null);
     setDraftSeerOwnerId(null);
     setSeerCheckId(null);
@@ -552,6 +608,7 @@ export default function App() {
     if (gameOver) return;
 
     setWolfTargetId(null);
+    setWhiteWolfKingExplodeTargetId(null);
     setSeerCheckId(null);
     setWitchSave(false);
     setWitchPoisonId(null);
@@ -683,6 +740,33 @@ export default function App() {
     setPhase(getNextFirstNightPhase(config, 'first-night-wolf'));
   }
 
+  function commitWhiteWolfKingAndNext() {
+    if (draftWhiteWolfKingOwnerId === null) return;
+
+    const nextPhase = getNextFirstNightPhase(config, 'first-night-white-wolf-king');
+
+    const nextPlayers: Player[] = players.map((p): Player => {
+      if (!selectedWolfIds.includes(p.id)) return p;
+
+      return {
+        ...p,
+        role: p.id === draftWhiteWolfKingOwnerId ? '白狼王' : '狼人',
+      };
+    });
+
+    if (nextPhase === 'day-result') {
+      setPlayers(finalizeUnassignedVillagers(nextPlayers));
+      setWhiteWolfKingOwnerId(draftWhiteWolfKingOwnerId);
+      setFirstNightDone(true);
+      setPhase('day-result');
+      return;
+    }
+
+    setPlayers(nextPlayers);
+    setWhiteWolfKingOwnerId(draftWhiteWolfKingOwnerId);
+    setPhase(nextPhase);
+  }
+
   function commitSeerAndNext() {
     if (draftSeerOwnerId === null) return;
 
@@ -783,6 +867,13 @@ export default function App() {
     setPhase('day-result');
   }
 
+  function startWhiteWolfKingExplode() {
+    if (!canWhiteWolfKingExplode || whiteWolfKingPlayer === null) return;
+
+    setWhiteWolfKingExplodeTargetId(null);
+    setPhase('white-wolf-king-explode');
+  }
+
   function skipHunterShot() {
     if (gameOver) return;
 
@@ -811,45 +902,74 @@ export default function App() {
     checkGameOver(nextPlayers);
   }
 
+  function confirmWhiteWolfKingExplode() {
+    if (
+      gameOver ||
+      whiteWolfKingPlayer === null ||
+      whiteWolfKingExplodeTargetId === null
+    ) {
+      return;
+    }
+
+    const nextPlayers = players.map((player) => {
+      if (
+        player.id === whiteWolfKingPlayer.id ||
+        player.id === whiteWolfKingExplodeTargetId
+      ) {
+        return { ...player, alive: false };
+      }
+      return player;
+    });
+
+    setPlayers(nextPlayers);
+    setWhiteWolfKingExploded(true);
+    setWhiteWolfKingExplodeTargetId(null);
+
+    const ended = checkGameOver(nextPlayers);
+    if (ended) return;
+
+    startNextNight();
+  }
+
   function checkGameOver(nextPlayers: Player[]) {
     const aliveWolves = nextPlayers.filter(
-      (p) => p.alive && p.role === '狼人'
+      (p) => p.alive && isWolf(p.role)
     ).length;
-  
+
     const aliveVillagers = nextPlayers.filter(
       (p) => p.alive && isVillager(p.role)
     ).length;
-    
+
     const aliveGods = nextPlayers.filter(
       (p) => p.alive && isGod(p.role)
     ).length;
-  
-    // 好人胜：狼人全部死亡
+
     if (aliveWolves === 0) {
       setGameOver(true);
       setGameResult('好人阵营胜利 / Good team wins');
       return true;
     }
-  
-    // 狼人胜：村民全部死亡
+
     if (aliveVillagers === 0) {
       setGameOver(true);
       setGameResult('狼人阵营胜利 / Wolves win');
       return true;
     }
-  
-    // 狼人胜：神全部死亡
+
     if (aliveGods === 0) {
       setGameOver(true);
       setGameResult('狼人阵营胜利 / Wolves win');
       return true;
     }
-  
+
     return false;
   }
 
   const firstNightWolfReady =
     selectedWolfIds.length === config.wolfCount && wolfTargetId !== null;
+
+  const firstNightWhiteWolfKingReady =
+    !config.hasWhiteWolfKing || draftWhiteWolfKingOwnerId !== null;
 
   const firstNightSeerReady =
     !seerRoleExists || (draftSeerOwnerId !== null && seerCheckId !== null);
@@ -926,6 +1046,20 @@ export default function App() {
             onToggleWolfSelection={toggleWolfSelection}
             onSetWolfTarget={setWolfTargetId}
             onNext={commitWolvesAndNext}
+          />
+        )}
+
+        {phase === 'first-night-white-wolf-king' && config.hasWhiteWolfKing && (
+          <FirstNightWhiteWolfKingScreen
+            players={players}
+            selectablePlayers={selectableWhiteWolfKingPlayers}
+            draftWhiteWolfKingOwnerId={draftWhiteWolfKingOwnerId}
+            canGoNext={firstNightWhiteWolfKingReady}
+            onSelectWhiteWolfKing={setDraftWhiteWolfKingOwnerId}
+            onBack={() =>
+              setPhase(getPrevFirstNightPhase(config, 'first-night-white-wolf-king'))
+            }
+            onNext={commitWhiteWolfKingAndNext}
           />
         )}
 
@@ -1070,6 +1204,9 @@ export default function App() {
             onApplyVote={applyVoteResult}
             onStartNextNight={startNextNight}
             onReset={resetCurrentGame}
+            whiteWolfKingOwnerId={whiteWolfKingOwnerId}
+            canWhiteWolfKingExplode={canWhiteWolfKingExplode}
+            onStartWhiteWolfKingExplode={startWhiteWolfKingExplode}
           />
         )}
 
@@ -1097,6 +1234,17 @@ export default function App() {
             onSelectTarget={setHunterShotTargetId}
             onSkip={skipHunterShot}
             onConfirm={confirmHunterShot}
+          />
+        )}
+
+        {phase === 'white-wolf-king-explode' && whiteWolfKingPlayer !== null && (
+          <WhiteWolfKingExplodeScreen
+            whiteWolfKingPlayer={whiteWolfKingPlayer}
+            targets={whiteWolfKingExplodeTargets}
+            selectedTargetId={whiteWolfKingExplodeTargetId}
+            onSelectTarget={setWhiteWolfKingExplodeTargetId}
+            onBack={() => setPhase('day-result')}
+            onConfirm={confirmWhiteWolfKingExplode}
           />
         )}
       </div>

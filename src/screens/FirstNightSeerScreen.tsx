@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import Bilingual from '../components/Bilingual';
 import type { Player } from '../types';
+import { isWolf } from '../utils/roleUtils';
 
 type Props = {
   players: Player[];
@@ -34,7 +35,6 @@ export default function FirstNightSeerScreen({
     <section style={styles.card}>
       <Bilingual zh="3. 第一夜：预言家" en="First night: Seer" />
 
-      {/* 选择预言家 */}
       <div style={{ marginTop: 16 }}>
         <Bilingual
           zh="先选中谁是预言家，点击下一步后才保存"
@@ -74,7 +74,6 @@ export default function FirstNightSeerScreen({
         />
       </div>
 
-      {/* 查验目标 */}
       <div style={{ marginTop: 20 }}>
         <Bilingual zh="选择查验目标" en="Choose a player to check" small />
       </div>
@@ -99,22 +98,20 @@ export default function FirstNightSeerScreen({
         ))}
       </div>
 
-      {/* 查验结果 */}
       {checkedPlayer && (
         <div style={styles.resultBox}>
           <Bilingual
             zh={`查验结果：${checkedPlayer.seat}号 是 ${
-              checkedPlayer.role === '狼人' ? '狼人' : '好人阵营'
+              isWolf(checkedPlayer.role) ? '狼人阵营' : '好人阵营'
             }`}
             en={`Result: Seat ${checkedPlayer.seat} is ${
-              checkedPlayer.role === '狼人' ? 'a wolf' : 'good team'
+              isWolf(checkedPlayer.role) ? 'wolf team' : 'good team'
             }`}
             small
           />
         </div>
       )}
 
-      {/* 操作按钮 */}
       <div style={styles.actionRow}>
         <button style={styles.secondaryButton} onClick={onBack}>
           <Bilingual zh="上一步" en="Back" small />

@@ -36,7 +36,7 @@ export default function SetupScreen({
           labelEn="Number of wolves"
           value={config.wolfCount}
           min={1}
-          max={6}
+          max={8}
           onChange={(next) => onUpdateConfig({ wolfCount: next })}
           unitZh="狼"
         />
@@ -45,8 +45,8 @@ export default function SetupScreen({
           labelZh="村民数量"
           labelEn="Number of villagers"
           value={config.villagerCount}
-          min={0}
-          max={12}
+          min={1}
+          max={8}
           onChange={(next) => onUpdateConfig({ villagerCount: next })}
           unitZh="民"
         />
@@ -54,7 +54,7 @@ export default function SetupScreen({
 
       <div style={{ marginTop: 16 }}>
         <label style={styles.label}>
-          <Bilingual zh="本局加入的神" en="Special roles included" small />
+          <Bilingual zh="本局加入的角色" en="Special roles included" small />
         </label>
 
         <div style={styles.toggleWrap}>
@@ -93,6 +93,17 @@ export default function SetupScreen({
             />
             <Bilingual zh="猎人" en="Hunter" small />
           </label>
+
+          <label style={styles.checkboxCard}>
+            <input
+              type="checkbox"
+              checked={config.hasWhiteWolfKing}
+              onChange={(e) =>
+                onUpdateConfig({ hasWhiteWolfKing: e.target.checked })
+              }
+            />
+            <Bilingual zh="白狼王" en="White Wolf King" small />
+          </label>
         </div>
       </div>
 
@@ -100,11 +111,13 @@ export default function SetupScreen({
         <Bilingual
           zh={
             <>
-              请设置狼人数量、村民数量，以及加入的神职。
+              请设置狼人数量、村民数量，以及加入的角色。
               <br />
               系统会自动计算总人数。
               <br />
               公式：总人数 = 狼人 + 神职 + 村民
+              <br />
+              白狼王属于狼人阵营，占用一个狼位，不额外增加总人数。
             </>
           }
           en={
@@ -114,6 +127,9 @@ export default function SetupScreen({
               The total player count is calculated automatically.
               <br />
               Formula: total = wolves + special roles + villagers
+              <br />
+              The White Wolf King belongs to the wolf camp, occupies one wolf
+              slot, and does not increase the total player count.
             </>
           }
           small
@@ -132,6 +148,10 @@ export default function SetupScreen({
         <div>
           <strong>村民数量：</strong>
           {config.villagerCount}
+        </div>
+        <div>
+          <strong>白狼王：</strong>
+          {config.hasWhiteWolfKing ? '开启' : '关闭'}
         </div>
         <div>
           <strong>总人数：</strong>

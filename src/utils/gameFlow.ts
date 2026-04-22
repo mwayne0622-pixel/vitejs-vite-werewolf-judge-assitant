@@ -25,6 +25,15 @@ export function getNextFirstNightPhase(
   current: Phase
 ): Phase {
   if (current === 'first-night-wolf') {
+    if (config.hasWhiteWolfKing) return 'first-night-white-wolf-king';
+    if (config.hasSeer) return 'first-night-seer';
+    if (config.hasWitch) return 'first-night-witch';
+    if (config.hasGuard) return 'first-night-guard';
+    if (config.hasHunter) return 'first-night-hunter';
+    return 'day-result';
+  }
+
+  if (current === 'first-night-white-wolf-king') {
     if (config.hasSeer) return 'first-night-seer';
     if (config.hasWitch) return 'first-night-witch';
     if (config.hasGuard) return 'first-night-guard';
@@ -57,7 +66,14 @@ export function getPrevFirstNightPhase(
   config: GameConfig,
   current: Phase
 ): Phase {
-  if (current === 'first-night-seer') return 'first-night-wolf';
+  if (current === 'first-night-white-wolf-king') {
+    return 'first-night-wolf';
+  }
+
+  if (current === 'first-night-seer') {
+    if (config.hasWhiteWolfKing) return 'first-night-white-wolf-king';
+    return 'first-night-wolf';
+  }
 
   if (current === 'first-night-witch') {
     if (config.hasSeer) return 'first-night-seer';

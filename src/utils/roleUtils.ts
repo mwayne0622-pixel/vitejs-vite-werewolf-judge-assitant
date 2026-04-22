@@ -1,21 +1,17 @@
 import type { Role } from '../types';
 
-// 判断是否神职
+const GOD_ROLES: Role[] = ['预言家', '女巫', '守卫', '猎人'];
+const WOLF_ROLES: Role[] = ['狼人', '白狼王'];
+const VILLAGER_ROLES: Role[] = ['村民'];
+
 export function isGod(role: Role | null): boolean {
-  return (
-    role === '预言家' ||
-    role === '女巫' ||
-    role === '守卫' ||
-    role === '猎人'
-  );
+  return role !== null && GOD_ROLES.includes(role);
 }
 
-// 判断是否狼人（顺手一起做）
 export function isWolf(role: Role | null): boolean {
-  return role === '狼人';
+  return role !== null && WOLF_ROLES.includes(role);
 }
 
-// 判断是否村民
 export function isVillager(role: Role | null): boolean {
-  return role === '村民';
+  return role !== null && VILLAGER_ROLES.includes(role);
 }

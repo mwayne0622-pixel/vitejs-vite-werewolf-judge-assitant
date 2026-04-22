@@ -1,4 +1,11 @@
-export type Role = '狼人' | '预言家' | '女巫' | '守卫' | '猎人' | '村民';
+export type Role =
+  | '狼人'
+  | '白狼王'
+  | '预言家'
+  | '女巫'
+  | '守卫'
+  | '猎人'
+  | '村民';
 export type MaybeRole = Role | null;
 
 export type Phase =
@@ -8,6 +15,8 @@ export type Phase =
   | 'first-night-witch'
   | 'first-night-guard'
   | 'first-night-hunter'
+  | 'first-night-white-wolf-king'
+  | 'white-wolf-king-explode'
   | 'day-result'
   | 'day-vote'
   | 'hunter-shoot'
@@ -15,6 +24,7 @@ export type Phase =
   | 'night-seer'
   | 'night-witch'
   | 'night-guard';
+
 
 export type Player = {
   id: number;
@@ -31,4 +41,5 @@ export type GameConfig = {
   hasWitch: boolean;
   hasGuard: boolean;
   hasHunter: boolean;
+  hasWhiteWolfKing: boolean;
 };

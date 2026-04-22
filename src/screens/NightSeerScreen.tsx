@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import Bilingual from '../components/Bilingual';
 import type { Player } from '../types';
+import { isWolf } from '../utils/roleUtils';
 
 type Props = {
   alivePlayers: Player[];
@@ -68,10 +69,10 @@ export default function NightSeerScreen({
         <div style={styles.resultBox}>
           <Bilingual
             zh={`查验结果：${checkedPlayer.seat}号 是 ${
-              checkedPlayer.role === '狼人' ? '狼人' : '好人阵营'
+              isWolf(checkedPlayer.role) ? '狼人阵营' : '好人阵营'
             }`}
             en={`Result: Seat ${checkedPlayer.seat} is ${
-              checkedPlayer.role === '狼人' ? 'a wolf' : 'good team'
+              isWolf(checkedPlayer.role) ? 'wolf team' : 'good team'
             }`}
             small
           />
