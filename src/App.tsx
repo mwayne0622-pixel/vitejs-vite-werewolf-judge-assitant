@@ -98,6 +98,13 @@ export default function App() {
   const [votes, setVotes] = useState<Record<number, number | null>>({});
   const [voteApplied, setVoteApplied] = useState(false);
 
+  const [voteRound, setVoteRound] = useState<1 | 2>(1);
+  const [revoteCandidateIds, setRevoteCandidateIds] = useState<number[]>([]);
+
+  const [appliedVoteSummary, setAppliedVoteSummary] = useState<
+    (VoteSummary & { shouldRevote?: boolean }) | null
+  >(null);
+
   const [hunterShootSource, setHunterShootSource] = useState<
     'night' | 'vote' | null
   >(null);
@@ -159,6 +166,10 @@ export default function App() {
       setVotes(data.votes ?? {});
       setVoteApplied(Boolean(data.voteApplied));
 
+      setVoteRound(data.voteRound === 2 ? 2 : 1);
+      setRevoteCandidateIds(Array.isArray(data.revoteCandidateIds) ? data.revoteCandidateIds : []);
+      setAppliedVoteSummary(data.appliedVoteSummary ?? null);
+
       setHunterShootSource(data.hunterShootSource ?? null);
       setHunterShotTargetId(data.hunterShotTargetId ?? null);
       setHunterShotUsed(Boolean(data.hunterShotUsed));
@@ -212,6 +223,10 @@ export default function App() {
 
         gameOver,
         gameResult,
+
+        voteRound,
+        revoteCandidateIds,
+        appliedVoteSummary,
       })
     );
   }, [
@@ -244,6 +259,9 @@ export default function App() {
     hunterShotUsed,
     gameOver,
     gameResult,
+    voteRound,
+    revoteCandidateIds,
+    appliedVoteSummary,
   ]);
 
   const alivePlayers = useMemo(() => players.filter((p) => p.alive), [players]);
@@ -306,12 +324,25 @@ export default function App() {
     return players.filter((p) => p.alive && !deadSet.has(p.id));
   }, [players, dayApplied, dayResult.deadIds]);
 
-  const voteSummary: VoteSummary = useMemo(() => {
+  const currentVoteTargets =
+    voteRound === 2
+      ? alivePlayersAfterNight.filter((p) => revoteCandidateIds.includes(p.id))
+      : alivePlayersAfterNight;
+
+  const currentVoters =
+    voteRound === 2
+      ? alivePlayersAfterNight.filter((p) => !revoteCandidateIds.includes(p.id))
+      : alivePlayersAfterNight;
+
+  const voteSummary: VoteSummary & { shouldRevote: boolean } = useMemo(() => {
     const tally: Record<number, number> = {};
 
-    alivePlayersAfterNight.forEach((player) => {
+    currentVoters.forEach((player) => {
       const targetId = votes[player.id];
-      if (targetId != null) {
+      if (
+        targetId != null &&
+        currentVoteTargets.some((target) => target.id === targetId)
+      ) {
         tally[targetId] = (tally[targetId] || 0) + 1;
       }
     });
@@ -328,8 +359,9 @@ export default function App() {
         maxVotes: 0,
         eliminatedId: null,
         isTie: false,
-        message: '尚未产生有效投票',
-        english: 'No valid votes yet',
+        shouldRevote: false,
+        message: voteRound === 1 ? '尚未产生有效投票' : '尚未产生有效再投票',
+        english: voteRound === 1 ? 'No valid votes yet' : 'No valid revotes yet',
       };
     }
 
@@ -346,8 +378,28 @@ export default function App() {
         maxVotes,
         eliminatedId: topTargets[0],
         isTie: false,
+        shouldRevote: false,
         message: `投票出局：${eliminated?.seat}号`,
         english: `Voted out: Seat ${eliminated?.seat ?? ''}`,
+      };
+    }
+
+    if (voteRound === 1) {
+      return {
+        tally,
+        topTargets,
+        maxVotes,
+        eliminatedId: null,
+        isTie: true,
+        shouldRevote: true,
+        message: `平票，进入第二轮投票：${topTargets
+          .map((id) => {
+            const p = players.find((player) => player.id === id);
+            return p ? `${p.seat}号` : '';
+          })
+          .filter(Boolean)
+          .join('、')}`,
+        english: 'Tie vote, proceed to revote',
       };
     }
 
@@ -357,10 +409,16 @@ export default function App() {
       maxVotes,
       eliminatedId: null,
       isTie: true,
-      message: '投票平票，无人出局',
-      english: 'Vote tied, no one is eliminated',
+      shouldRevote: false,
+      message: '第二轮仍平票，无人出局',
+      english: 'Revote tied, no one is eliminated',
     };
-  }, [votes, alivePlayersAfterNight, players]);
+  }, [votes, currentVoters, currentVoteTargets, players, voteRound]);
+
+  const displayVoteSummary =
+    voteApplied && appliedVoteSummary
+      ? appliedVoteSummary
+      : voteSummary;
 
   function updateConfig(patch: Partial<GameConfig>) {
     setConfig((prev) => ({ ...prev, ...patch }));
@@ -406,6 +464,9 @@ export default function App() {
     setDayApplied(false);
     setVotes({});
     setVoteApplied(false);
+    setVoteRound(1);
+    setRevoteCandidateIds([]);
+    setAppliedVoteSummary(null);
 
     setHunterShootSource(null);
     setHunterShotTargetId(null);
@@ -448,12 +509,16 @@ export default function App() {
     setDayApplied(false);
     setVotes({});
     setVoteApplied(false);
+    setVoteRound(1);
+    setRevoteCandidateIds([]);
+    setAppliedVoteSummary(null);
 
     setHunterShootSource(null);
     setHunterShotTargetId(null);
     setHunterShotUsed(false);
     setGameOver(false);
     setGameResult(null);
+
   }
 
   function startNextNight() {
@@ -468,7 +533,11 @@ export default function App() {
     setDayApplied(false);
     setVotes({});
     setVoteApplied(false);
+    setVoteRound(1);
+    setRevoteCandidateIds([]);
+    setAppliedVoteSummary(null);
     setPhase('night-wolf');
+
   }
 
   function applyDayResult() {
@@ -512,6 +581,8 @@ export default function App() {
   }
 
   function setPlayerVote(voterId: number, targetId: number) {
+    if (!currentVoteTargets.some((p) => p.id === targetId)) return;
+
     setVotes((prev) => ({
       ...prev,
       [voterId]: targetId,
@@ -520,6 +591,14 @@ export default function App() {
 
   function applyVoteResult() {
     if (voteApplied || gameOver) return;
+
+    // 第一轮平票 -> 进入第二轮
+    if (voteRound === 1 && voteSummary.shouldRevote) {
+      setVoteRound(2);
+      setRevoteCandidateIds(voteSummary.topTargets);
+      setVotes({});
+      return;
+    }
 
     const hunterDiesByVote =
       hunterPlayer !== null && voteSummary.eliminatedId === hunterPlayer.id;
@@ -532,6 +611,9 @@ export default function App() {
             : player
         )
         : players;
+
+    // 关键：锁住应用当下的投票结果
+    setAppliedVoteSummary(voteSummary);
 
     setPlayers(nextPlayers);
     setVoteApplied(true);
@@ -934,7 +1016,7 @@ export default function App() {
             witchSave={finalWitchSave}
             witchPoisonId={finalWitchPoisonId}
             guardTargetId={guardTargetId}
-            voteSummary={voteSummary}
+            voteSummary={displayVoteSummary}
             voteApplied={voteApplied}
             dayApplied={dayApplied}
             onBack={() => setPhase(getPrevNightPhase(config, 'day-result'))}
@@ -948,9 +1030,11 @@ export default function App() {
 
         {phase === 'day-vote' && (
           <VoteScreen
-            alivePlayersAfterNight={alivePlayersAfterNight}
+            voters={currentVoters}
+            voteTargets={currentVoteTargets}
+            voteRound={voteRound}
             votes={votes}
-            voteSummary={voteSummary}
+            voteSummary={displayVoteSummary}
             voteApplied={voteApplied}
             onSetPlayerVote={setPlayerVote}
             onBack={() => setPhase('day-result')}

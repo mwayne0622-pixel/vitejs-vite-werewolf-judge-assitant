@@ -13,9 +13,11 @@ type VoteSummary = {
 };
 
 type Props = {
-  alivePlayersAfterNight: Player[];
+  voters: Player[];
+  voteTargets: Player[];
+  voteRound: 1 | 2;
   votes: Record<number, number | null>;
-  voteSummary: VoteSummary;
+  voteSummary: VoteSummary & { shouldRevote: boolean };
   voteApplied: boolean;
   onSetPlayerVote: (voterId: number, targetId: number) => void;
   onBack: () => void;
@@ -23,7 +25,9 @@ type Props = {
 };
 
 export default function VoteScreen({
-  alivePlayersAfterNight,
+  voters,
+  voteTargets,
+  voteRound,
   votes,
   voteSummary,
   voteApplied,
@@ -35,10 +39,18 @@ export default function VoteScreen({
     <section style={styles.card}>
       <Bilingual zh="白天投票" en="Day voting" />
 
+      <div style={{ marginTop: 8 }}>
+        <Bilingual
+          zh={voteRound === 1 ? '当前为第一轮投票' : '当前为第二轮平票再投'}
+          en={voteRound === 1 ? 'Round 1 voting' : 'Round 2 revote'}
+          small
+        />
+      </div>
+
       <div style={styles.tipBox}>
         <Bilingual
-          zh="记录每位存活玩家的投票。最高票唯一则出局，平票则无人出局。"
-          en="Record each alive player's vote. A unique highest vote is eliminated; a tie means no elimination."
+          zh="记录每位投票玩家的投票。第一轮平票将进入第二轮再投，第二轮平票则无人出局。"
+          en="Record each eligible player's vote. A tie in round 1 leads to a revote; a tie in round 2 means no elimination."
           small
         />
       </div>
@@ -48,7 +60,7 @@ export default function VoteScreen({
       </div>
 
       <div style={styles.playerList}>
-        {alivePlayersAfterNight.map((voter) => (
+        {voters.map((voter) => (
           <div key={voter.id} style={styles.voteRow}>
             <div style={styles.voteVoter}>
               <Bilingual
@@ -59,15 +71,13 @@ export default function VoteScreen({
             </div>
 
             <div style={styles.optionList}>
-              {alivePlayersAfterNight.map((target) => (
+              {voteTargets.map((target) => (
                 <button
                   key={target.id}
                   style={{
                     ...styles.optionButton,
-                    background:
-                      votes[voter.id] === target.id ? '#111827' : '#ffffff',
-                    color:
-                      votes[voter.id] === target.id ? '#ffffff' : '#111827',
+                    background: votes[voter.id] === target.id ? '#111827' : '#ffffff',
+                    color: votes[voter.id] === target.id ? '#ffffff' : '#111827',
                   }}
                   onClick={() => onSetPlayerVote(voter.id, target.id)}
                 >
@@ -89,7 +99,7 @@ export default function VoteScreen({
           {voteSummary.message}
         </div>
 
-        {alivePlayersAfterNight.map((target) => {
+        {voteTargets.map((target) => {
           const count = voteSummary.tally[target.id] || 0;
           return (
             <div key={target.id}>
