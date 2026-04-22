@@ -53,6 +53,95 @@ type VoteSummary = {
   english: string;
 };
 
+function calculateVoteSummary(params: {
+  votes: Record<number, number | null>;
+  currentVoters: Player[];
+  currentVoteTargets: Player[];
+  players: Player[];
+  voteRound: 1 | 2;
+}): VoteSummary & { shouldRevote: boolean } {
+  const { votes, currentVoters, currentVoteTargets, players, voteRound } = params;
+
+  const tally: Record<number, number> = {};
+
+  currentVoters.forEach((player) => {
+    const targetId = votes[player.id];
+    if (
+      targetId != null &&
+      currentVoteTargets.some((target) => target.id === targetId)
+    ) {
+      tally[targetId] = (tally[targetId] || 0) + 1;
+    }
+  });
+
+  const entries = Object.entries(tally).map(([targetId, count]) => ({
+    targetId: Number(targetId),
+    count,
+  }));
+
+  if (entries.length === 0) {
+    return {
+      tally,
+      topTargets: [],
+      maxVotes: 0,
+      eliminatedId: null,
+      isTie: false,
+      shouldRevote: false,
+      message: voteRound === 1 ? '尚未产生有效投票' : '尚未产生有效再投票',
+      english: voteRound === 1 ? 'No valid votes yet' : 'No valid revotes yet',
+    };
+  }
+
+  const maxVotes = Math.max(...entries.map((e) => e.count));
+  const topTargets = entries
+    .filter((e) => e.count === maxVotes)
+    .map((e) => e.targetId);
+
+  if (topTargets.length === 1) {
+    const eliminated = players.find((p) => p.id === topTargets[0]) ?? null;
+    return {
+      tally,
+      topTargets,
+      maxVotes,
+      eliminatedId: topTargets[0],
+      isTie: false,
+      shouldRevote: false,
+      message: `投票出局：${eliminated?.seat}号`,
+      english: `Voted out: Seat ${eliminated?.seat ?? ''}`,
+    };
+  }
+
+  if (voteRound === 1) {
+    return {
+      tally,
+      topTargets,
+      maxVotes,
+      eliminatedId: null,
+      isTie: true,
+      shouldRevote: true,
+      message: `平票，进入第二轮投票：${topTargets
+        .map((id) => {
+          const p = players.find((player) => player.id === id);
+          return p ? `${p.seat}号` : '';
+        })
+        .filter(Boolean)
+        .join('、')}`,
+      english: 'Tie vote, proceed to revote',
+    };
+  }
+
+  return {
+    tally,
+    topTargets,
+    maxVotes,
+    eliminatedId: null,
+    isTie: true,
+    shouldRevote: false,
+    message: '第二轮仍平票，无人出局',
+    english: 'Revote tied, no one is eliminated',
+  };
+}
+
 export default function App() {
   const [config, setConfig] = useState<GameConfig>(defaultConfig);
   const [phase, setPhase] = useState<Phase>('setup');
@@ -334,91 +423,26 @@ export default function App() {
       ? alivePlayersAfterNight.filter((p) => !revoteCandidateIds.includes(p.id))
       : alivePlayersAfterNight;
 
+  const allCurrentVotersVoted = currentVoters.every(
+    (player) => votes[player.id] != null
+  );
+
   const voteSummary: VoteSummary & { shouldRevote: boolean } = useMemo(() => {
-    const tally: Record<number, number> = {};
-
-    currentVoters.forEach((player) => {
-      const targetId = votes[player.id];
-      if (
-        targetId != null &&
-        currentVoteTargets.some((target) => target.id === targetId)
-      ) {
-        tally[targetId] = (tally[targetId] || 0) + 1;
-      }
+    return calculateVoteSummary({
+      votes,
+      currentVoters,
+      currentVoteTargets,
+      players,
+      voteRound,
     });
-
-    const entries = Object.entries(tally).map(([targetId, count]) => ({
-      targetId: Number(targetId),
-      count,
-    }));
-
-    if (entries.length === 0) {
-      return {
-        tally,
-        topTargets: [],
-        maxVotes: 0,
-        eliminatedId: null,
-        isTie: false,
-        shouldRevote: false,
-        message: voteRound === 1 ? '尚未产生有效投票' : '尚未产生有效再投票',
-        english: voteRound === 1 ? 'No valid votes yet' : 'No valid revotes yet',
-      };
-    }
-
-    const maxVotes = Math.max(...entries.map((e) => e.count));
-    const topTargets = entries
-      .filter((e) => e.count === maxVotes)
-      .map((e) => e.targetId);
-
-    if (topTargets.length === 1) {
-      const eliminated = players.find((p) => p.id === topTargets[0]) ?? null;
-      return {
-        tally,
-        topTargets,
-        maxVotes,
-        eliminatedId: topTargets[0],
-        isTie: false,
-        shouldRevote: false,
-        message: `投票出局：${eliminated?.seat}号`,
-        english: `Voted out: Seat ${eliminated?.seat ?? ''}`,
-      };
-    }
-
-    if (voteRound === 1) {
-      return {
-        tally,
-        topTargets,
-        maxVotes,
-        eliminatedId: null,
-        isTie: true,
-        shouldRevote: true,
-        message: `平票，进入第二轮投票：${topTargets
-          .map((id) => {
-            const p = players.find((player) => player.id === id);
-            return p ? `${p.seat}号` : '';
-          })
-          .filter(Boolean)
-          .join('、')}`,
-        english: 'Tie vote, proceed to revote',
-      };
-    }
-
-    return {
-      tally,
-      topTargets,
-      maxVotes,
-      eliminatedId: null,
-      isTie: true,
-      shouldRevote: false,
-      message: '第二轮仍平票，无人出局',
-      english: 'Revote tied, no one is eliminated',
-    };
   }, [votes, currentVoters, currentVoteTargets, players, voteRound]);
 
-  const displayVoteSummary =
-    voteApplied && appliedVoteSummary
-      ? appliedVoteSummary
-      : voteSummary;
+  const displayVoteSummary = useMemo(() => {
+    if (voteApplied && appliedVoteSummary) {
+      return appliedVoteSummary;
+    }
+    return voteSummary;
+  }, [voteApplied, appliedVoteSummary, voteSummary]);
 
   function updateConfig(patch: Partial<GameConfig>) {
     setConfig((prev) => ({ ...prev, ...patch }));
@@ -592,29 +616,35 @@ export default function App() {
   function applyVoteResult() {
     if (voteApplied || gameOver) return;
 
-    // 第一轮平票 -> 进入第二轮
-    if (voteRound === 1 && voteSummary.shouldRevote) {
+    const latestSummary = calculateVoteSummary({
+      votes,
+      currentVoters,
+      currentVoteTargets,
+      players,
+      voteRound,
+    });
+
+    if (voteRound === 1 && latestSummary.shouldRevote) {
+      setAppliedVoteSummary(latestSummary);
       setVoteRound(2);
-      setRevoteCandidateIds(voteSummary.topTargets);
+      setRevoteCandidateIds(latestSummary.topTargets);
       setVotes({});
       return;
     }
 
     const hunterDiesByVote =
-      hunterPlayer !== null && voteSummary.eliminatedId === hunterPlayer.id;
+      hunterPlayer !== null && latestSummary.eliminatedId === hunterPlayer.id;
 
     const nextPlayers =
-      voteSummary.eliminatedId !== null
+      latestSummary.eliminatedId !== null
         ? players.map((player) =>
-          player.id === voteSummary.eliminatedId
+          player.id === latestSummary.eliminatedId
             ? { ...player, alive: false }
             : player
         )
         : players;
 
-    // 关键：锁住应用当下的投票结果
-    setAppliedVoteSummary(voteSummary);
-
+    setAppliedVoteSummary(latestSummary);
     setPlayers(nextPlayers);
     setVoteApplied(true);
 
@@ -783,23 +813,41 @@ export default function App() {
     const aliveWolves = nextPlayers.filter(
       (p) => p.alive && p.role === '狼人'
     ).length;
-
-    const aliveGood = nextPlayers.filter(
-      (p) => p.alive && p.role !== '狼人'
+  
+    const aliveVillagers = nextPlayers.filter(
+      (p) => p.alive && p.role === '村民'
     ).length;
-
+  
+    const aliveGods = nextPlayers.filter(
+      (p) =>
+        p.alive &&
+        (p.role === '预言家' ||
+          p.role === '女巫' ||
+          p.role === '守卫' ||
+          p.role === '猎人')
+    ).length;
+  
+    // 好人胜：狼人全部死亡
     if (aliveWolves === 0) {
       setGameOver(true);
       setGameResult('好人阵营胜利 / Good team wins');
       return true;
     }
-
-    if (aliveWolves >= aliveGood && aliveGood > 0) {
+  
+    // 狼人胜：村民全部死亡
+    if (aliveVillagers === 0) {
       setGameOver(true);
       setGameResult('狼人阵营胜利 / Wolves win');
       return true;
     }
-
+  
+    // 狼人胜：神全部死亡
+    if (aliveGods === 0) {
+      setGameOver(true);
+      setGameResult('狼人阵营胜利 / Wolves win');
+      return true;
+    }
+  
     return false;
   }
 
@@ -1036,6 +1084,7 @@ export default function App() {
             votes={votes}
             voteSummary={displayVoteSummary}
             voteApplied={voteApplied}
+            allCurrentVotersVoted={allCurrentVotersVoted}  // 👈 新增
             onSetPlayerVote={setPlayerVote}
             onBack={() => setPhase('day-result')}
             onApplyVoteResult={applyVoteResult}

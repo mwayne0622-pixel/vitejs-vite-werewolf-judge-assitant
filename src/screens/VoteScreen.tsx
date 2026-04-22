@@ -19,6 +19,7 @@ type Props = {
   votes: Record<number, number | null>;
   voteSummary: VoteSummary & { shouldRevote: boolean };
   voteApplied: boolean;
+  allCurrentVotersVoted: boolean;
   onSetPlayerVote: (voterId: number, targetId: number) => void;
   onBack: () => void;
   onApplyVoteResult: () => void;
@@ -31,6 +32,7 @@ export default function VoteScreen({
   votes,
   voteSummary,
   voteApplied,
+  allCurrentVotersVoted,
   onSetPlayerVote,
   onBack,
   onApplyVoteResult,
@@ -117,11 +119,12 @@ export default function VoteScreen({
         <button
           style={{
             ...styles.primaryButton,
-            opacity: voteApplied ? 0.5 : 1,
-            cursor: voteApplied ? 'not-allowed' : 'pointer',
+            opacity: voteApplied || !allCurrentVotersVoted ? 0.5 : 1,
+            cursor:
+              voteApplied || !allCurrentVotersVoted ? 'not-allowed' : 'pointer',
           }}
           onClick={onApplyVoteResult}
-          disabled={voteApplied}
+          disabled={voteApplied || !allCurrentVotersVoted}
         >
           <Bilingual zh="应用投票结果" en="Apply vote result" small />
         </button>

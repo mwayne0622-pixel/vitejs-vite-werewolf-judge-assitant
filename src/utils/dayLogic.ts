@@ -8,19 +8,34 @@ type BuildDayResultParams = {
   guardTargetId: number | null;
 };
 
+type DayResult = {
+  deadIds: number[];
+  message: string;
+  english: string;
+};
+
 export function buildDayResult({
   players,
   wolfTargetId,
   witchSave,
   witchPoisonId,
   guardTargetId,
-}: BuildDayResultParams) {
+}: BuildDayResultParams): DayResult {
   const deadIds = new Set<number>();
 
-  const savedByWitch = witchSave && wolfTargetId !== null;
-  const guarded = guardTargetId !== null && guardTargetId === wolfTargetId;
+  const isWolfTargetSavedByWitch =
+    wolfTargetId !== null && witchSave;
 
-  if (wolfTargetId !== null && !savedByWitch && !guarded) {
+  const isWolfTargetGuarded =
+    wolfTargetId !== null &&
+    guardTargetId !== null &&
+    guardTargetId === wolfTargetId;
+
+  if (
+    wolfTargetId !== null &&
+    !isWolfTargetSavedByWitch &&
+    !isWolfTargetGuarded
+  ) {
     deadIds.add(wolfTargetId);
   }
 
@@ -32,7 +47,7 @@ export function buildDayResult({
 
   if (deadPlayers.length === 0) {
     return {
-      deadIds: [] as number[],
+      deadIds: [],
       message: '平安夜',
       english: 'Peaceful night',
     };
@@ -40,7 +55,7 @@ export function buildDayResult({
 
   if (deadPlayers.length === 1) {
     return {
-      deadIds: deadPlayers.map((p) => p.id),
+      deadIds: [deadPlayers[0].id],
       message: `昨夜死亡：${deadPlayers[0].seat}号`,
       english: `Last night dead: Seat ${deadPlayers[0].seat}`,
     };
