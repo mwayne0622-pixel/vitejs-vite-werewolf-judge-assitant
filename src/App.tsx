@@ -32,6 +32,8 @@ import NightWolfScreen from './screens/NightWolfScreen';
 
 import HunterShootScreen from './screens/HunterShootScreen';
 
+import { isGod, isWolf, isVillager } from './utils/roleUtils';
+
 const STORAGE_KEY = 'wolf-judge-assistant-vote-split-v2';
 
 const defaultConfig: GameConfig = {
@@ -815,16 +817,11 @@ export default function App() {
     ).length;
   
     const aliveVillagers = nextPlayers.filter(
-      (p) => p.alive && p.role === '村民'
+      (p) => p.alive && isVillager(p.role)
     ).length;
-  
+    
     const aliveGods = nextPlayers.filter(
-      (p) =>
-        p.alive &&
-        (p.role === '预言家' ||
-          p.role === '女巫' ||
-          p.role === '守卫' ||
-          p.role === '猎人')
+      (p) => p.alive && isGod(p.role)
     ).length;
   
     // 好人胜：狼人全部死亡
