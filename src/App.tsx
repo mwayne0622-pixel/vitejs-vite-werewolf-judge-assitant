@@ -46,6 +46,7 @@ const defaultConfig: GameConfig = {
   hasWitch: true,
   hasGuard: true,
   hasHunter: false,
+  hasWhiteWolfKing: false,
 };
 
 type VoteSummary = {
@@ -202,7 +203,7 @@ export default function App() {
   const [revoteCandidateIds, setRevoteCandidateIds] = useState<number[]>([]);
 
   const [appliedVoteSummary, setAppliedVoteSummary] = useState<
-    (VoteSummary & { shouldRevote?: boolean }) | null
+    (VoteSummary & { shouldRevote: boolean }) | null
   >(null);
 
   const [hunterShootSource, setHunterShootSource] = useState<
