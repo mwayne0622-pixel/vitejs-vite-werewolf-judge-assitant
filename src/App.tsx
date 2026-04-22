@@ -106,6 +106,9 @@ export default function App() {
   );
   const [hunterShotUsed, setHunterShotUsed] = useState(false);
 
+  const [gameOver, setGameOver] = useState(false);
+  const [gameResult, setGameResult] = useState<string | null>(null);
+
   const playerCount = getPlayerCount(config);
   const configValid = config.wolfCount >= 1 && config.villagerCount >= 0;
 
@@ -159,6 +162,9 @@ export default function App() {
       setHunterShootSource(data.hunterShootSource ?? null);
       setHunterShotTargetId(data.hunterShotTargetId ?? null);
       setHunterShotUsed(Boolean(data.hunterShotUsed));
+
+      setGameOver(Boolean(data.gameOver));
+      setGameResult(data.gameResult ?? null);
     } catch {
       // ignore bad cache
     }
@@ -203,6 +209,9 @@ export default function App() {
         hunterShootSource,
         hunterShotTargetId,
         hunterShotUsed,
+
+        gameOver,
+        gameResult,
       })
     );
   }, [
@@ -233,6 +242,8 @@ export default function App() {
     hunterShootSource,
     hunterShotTargetId,
     hunterShotUsed,
+    gameOver,
+    gameResult,
   ]);
 
   const alivePlayers = useMemo(() => players.filter((p) => p.alive), [players]);
@@ -399,6 +410,9 @@ export default function App() {
     setHunterShootSource(null);
     setHunterShotTargetId(null);
     setHunterShotUsed(false);
+
+    setGameOver(false);
+    setGameResult(null);
   }
 
   function resetCurrentGame() {
@@ -438,9 +452,14 @@ export default function App() {
     setHunterShootSource(null);
     setHunterShotTargetId(null);
     setHunterShotUsed(false);
+    setGameOver(false);
+    setGameResult(null);
   }
 
   function startNextNight() {
+
+    if (gameOver) return;
+
     setWolfTargetId(null);
     setSeerCheckId(null);
     setWitchSave(false);
@@ -453,7 +472,7 @@ export default function App() {
   }
 
   function applyDayResult() {
-    if (dayApplied) return;
+    if (dayApplied || gameOver) return;
 
     const hunterDiesAtNight =
       hunterPlayer !== null && dayResult.deadIds.includes(hunterPlayer.id);
@@ -461,15 +480,16 @@ export default function App() {
     const hunterPoisonedAtNight =
       hunterPlayer !== null && finalWitchPoisonId === hunterPlayer.id;
 
-    if (dayResult.deadIds.length > 0) {
-      setPlayers((prev) =>
-        prev.map((player) =>
+    const nextPlayers =
+      dayResult.deadIds.length > 0
+        ? players.map((player) =>
           dayResult.deadIds.includes(player.id)
             ? { ...player, alive: false }
             : player
         )
-      );
-    }
+        : players;
+
+    setPlayers(nextPlayers);
 
     if (witchSave) {
       setWitchSaveUsed(true);
@@ -485,7 +505,10 @@ export default function App() {
       setHunterShootSource('night');
       setHunterShotTargetId(null);
       setPhase('hunter-shoot');
+      return;
     }
+
+    checkGameOver(nextPlayers);
   }
 
   function setPlayerVote(voterId: number, targetId: number) {
@@ -496,28 +519,31 @@ export default function App() {
   }
 
   function applyVoteResult() {
-    if (voteApplied) return;
+    if (voteApplied || gameOver) return;
 
     const hunterDiesByVote =
       hunterPlayer !== null && voteSummary.eliminatedId === hunterPlayer.id;
 
-    if (voteSummary.eliminatedId !== null) {
-      setPlayers((prev) =>
-        prev.map((player) =>
+    const nextPlayers =
+      voteSummary.eliminatedId !== null
+        ? players.map((player) =>
           player.id === voteSummary.eliminatedId
             ? { ...player, alive: false }
             : player
         )
-      );
-    }
+        : players;
 
+    setPlayers(nextPlayers);
     setVoteApplied(true);
 
     if (hunterDiesByVote && !hunterShotUsed) {
       setHunterShootSource('vote');
       setHunterShotTargetId(null);
       setPhase('hunter-shoot');
+      return;
     }
+
+    checkGameOver(nextPlayers);
   }
 
   function toggleWolfSelection(playerId: number) {
@@ -545,7 +571,7 @@ export default function App() {
 
   function commitSeerAndNext() {
     if (draftSeerOwnerId === null) return;
-  
+
     const nextPhase = getNextFirstNightPhase(config, 'first-night-seer');
     const nextPlayers: Player[] = players.map((p): Player => {
       if (p.role === '预言家' && p.id !== draftSeerOwnerId) {
@@ -556,7 +582,7 @@ export default function App() {
       }
       return p;
     });
-  
+
     if (nextPhase === 'day-result') {
       setPlayers(finalizeUnassignedVillagers(nextPlayers));
       setSeerOwnerId(draftSeerOwnerId);
@@ -564,7 +590,7 @@ export default function App() {
       setPhase('day-result');
       return;
     }
-  
+
     setPlayers(nextPlayers);
     setSeerOwnerId(draftSeerOwnerId);
     setPhase(nextPhase);
@@ -572,7 +598,7 @@ export default function App() {
 
   function commitWitchAndNext() {
     if (draftWitchOwnerId === null) return;
-  
+
     const nextPhase = getNextFirstNightPhase(config, 'first-night-witch');
     const nextPlayers: Player[] = players.map((p): Player => {
       if (p.role === '女巫' && p.id !== draftWitchOwnerId) {
@@ -583,7 +609,7 @@ export default function App() {
       }
       return p;
     });
-  
+
     if (nextPhase === 'day-result') {
       setPlayers(finalizeUnassignedVillagers(nextPlayers));
       setWitchOwnerId(draftWitchOwnerId);
@@ -591,7 +617,7 @@ export default function App() {
       setPhase('day-result');
       return;
     }
-  
+
     setPlayers(nextPlayers);
     setWitchOwnerId(draftWitchOwnerId);
     setPhase(nextPhase);
@@ -599,7 +625,7 @@ export default function App() {
 
   function commitGuardAndNext() {
     if (draftGuardOwnerId === null) return;
-  
+
     const nextPhase = getNextFirstNightPhase(config, 'first-night-guard');
     const nextPlayers: Player[] = players.map((p): Player => {
       if (p.role === '守卫' && p.id !== draftGuardOwnerId) {
@@ -610,7 +636,7 @@ export default function App() {
       }
       return p;
     });
-  
+
     if (nextPhase === 'day-result') {
       setPlayers(finalizeUnassignedVillagers(nextPlayers));
       setGuardOwnerId(draftGuardOwnerId);
@@ -618,7 +644,7 @@ export default function App() {
       setPhase('day-result');
       return;
     }
-  
+
     setPlayers(nextPlayers);
     setGuardOwnerId(draftGuardOwnerId);
     setPhase(nextPhase);
@@ -626,7 +652,7 @@ export default function App() {
 
   function commitHunterAndNext() {
     if (draftHunterOwnerId === null) return;
-  
+
     const nextPlayers: Player[] = players.map((p): Player => {
       if (p.role === '猎人' && p.id !== draftHunterOwnerId) {
         return { ...p, role: null };
@@ -636,7 +662,7 @@ export default function App() {
       }
       return p;
     });
-  
+
     setPlayers(finalizeUnassignedVillagers(nextPlayers));
     setHunterOwnerId(draftHunterOwnerId);
     setFirstNightDone(true);
@@ -644,6 +670,8 @@ export default function App() {
   }
 
   function skipHunterShot() {
+    if (gameOver) return;
+
     setHunterShotUsed(true);
     const nextPhase = hunterShootSource === 'night' ? 'day-result' : 'day-vote';
     setHunterShootSource(null);
@@ -652,19 +680,45 @@ export default function App() {
   }
 
   function confirmHunterShot() {
-    if (hunterShotTargetId === null) return;
+    if (hunterShotTargetId === null || gameOver) return;
 
-    setPlayers((prev) =>
-      prev.map((player) =>
-        player.id === hunterShotTargetId ? { ...player, alive: false } : player
-      )
+    const nextPlayers = players.map((player) =>
+      player.id === hunterShotTargetId ? { ...player, alive: false } : player
     );
+
+    setPlayers(nextPlayers);
 
     setHunterShotUsed(true);
     const nextPhase = hunterShootSource === 'night' ? 'day-result' : 'day-vote';
     setHunterShootSource(null);
     setHunterShotTargetId(null);
     setPhase(nextPhase);
+
+    checkGameOver(nextPlayers);
+  }
+
+  function checkGameOver(nextPlayers: Player[]) {
+    const aliveWolves = nextPlayers.filter(
+      (p) => p.alive && p.role === '狼人'
+    ).length;
+
+    const aliveGood = nextPlayers.filter(
+      (p) => p.alive && p.role !== '狼人'
+    ).length;
+
+    if (aliveWolves === 0) {
+      setGameOver(true);
+      setGameResult('好人阵营胜利 / Good team wins');
+      return true;
+    }
+
+    if (aliveWolves >= aliveGood && aliveGood > 0) {
+      setGameOver(true);
+      setGameResult('狼人阵营胜利 / Wolves win');
+      return true;
+    }
+
+    return false;
   }
 
   const firstNightWolfReady =
@@ -705,6 +759,12 @@ export default function App() {
             />
           </div>
         </div>
+
+        {gameOver && gameResult && (
+          <div style={styles.gameOverBox}>
+            <Bilingual zh={gameResult} en={gameResult} align="center" />
+          </div>
+        )}
 
         <div style={styles.phaseBar}>
           <Bilingual
@@ -1090,5 +1150,14 @@ const styles: Record<string, CSSProperties> = {
     gap: 10,
     fontSize: 15,
     color: '#111827',
+  },
+  gameOverBox: {
+    marginBottom: 20,
+    padding: 16,
+    borderRadius: 16,
+    background: '#fef3c7',
+    color: '#92400e',
+    border: '1px solid #f59e0b',
+    fontWeight: 700,
   },
 };
