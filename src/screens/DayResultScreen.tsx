@@ -31,6 +31,7 @@ type Props = {
 
   // 状态
   dayApplied: boolean;
+  gameOver: boolean;
 
   whiteWolfKingOwnerId: number | null;
   canWhiteWolfKingExplode: boolean;
@@ -46,12 +47,19 @@ type Props = {
   onReset: () => void;
 };
 
-function roleLabel(role: Player['role']) {
-  return role ?? '未确认';
+function roleLabel(player: Player) {
+  if (player.role === '白痴' && player.idiotRevealed) {
+    return '白痴（已翻牌）';
+  }
+  return player.role ?? '未确认';
 }
 
-function roleToEnglish(role: Player['role']) {
-  switch (role) {
+function roleToEnglish(player: Player) {
+  if (player.role === '白痴' && player.idiotRevealed) {
+    return 'Idiot (Revealed)';
+  }
+
+  switch (player.role) {
     case '狼人':
       return 'Wolf';
     case '白狼王':
@@ -64,6 +72,8 @@ function roleToEnglish(role: Player['role']) {
       return 'Guard';
     case '猎人':
       return 'Hunter';
+    case '白痴':
+      return 'Idiot';
     case '村民':
       return 'Villager';
     default:
@@ -84,6 +94,7 @@ export default function DayResultScreen({
   voteSummary,
   voteApplied,
   dayApplied,
+  gameOver,
 
   whiteWolfKingOwnerId,
   canWhiteWolfKingExplode,
@@ -96,6 +107,8 @@ export default function DayResultScreen({
   onStartWhiteWolfKingExplode,
   onReset,
 }: Props) {
+  const disableActions = gameOver;
+
   const getSeat = (id: number | null) => {
     if (!id) return '无';
     const p = players.find((p) => p.id === id);
@@ -176,39 +189,65 @@ export default function DayResultScreen({
 
       {/* 按钮区 */}
       <div style={styles.actionRow}>
-        <button style={styles.secondaryButton} onClick={onBack}>
+        <button
+          style={{
+            ...styles.secondaryButton,
+            opacity: disableActions ? 0.5 : 1,
+            cursor: disableActions ? 'not-allowed' : 'pointer',
+          }}
+          disabled={disableActions}
+          onClick={onBack}
+        >
           <Bilingual zh="上一步" en="Back" small />
         </button>
 
         <button
           style={{
             ...styles.primaryButton,
-            opacity: dayApplied ? 0.5 : 1,
-            cursor: dayApplied ? 'not-allowed' : 'pointer',
+            opacity: disableActions || dayApplied ? 0.5 : 1,
+            cursor:
+              disableActions || dayApplied ? 'not-allowed' : 'pointer',
           }}
-          disabled={dayApplied}
+          disabled={disableActions || dayApplied}
           onClick={onApplyDayResult}
         >
           <Bilingual zh="应用夜间死亡" en="Apply night deaths" small />
         </button>
 
-        <button style={styles.primaryButton} onClick={onGoToVote}>
+        <button
+          style={{
+            ...styles.primaryButton,
+            opacity: disableActions ? 0.5 : 1,
+            cursor: disableActions ? 'not-allowed' : 'pointer',
+          }}
+          disabled={disableActions}
+          onClick={onGoToVote}
+        >
           <Bilingual zh="进入投票" en="Go to voting" small />
         </button>
 
         <button
           style={{
             ...styles.primaryButton,
-            opacity: voteApplied ? 0.5 : 1,
-            cursor: voteApplied ? 'not-allowed' : 'pointer',
+            opacity: disableActions || voteApplied ? 0.5 : 1,
+            cursor:
+              disableActions || voteApplied ? 'not-allowed' : 'pointer',
           }}
-          disabled={voteApplied}
+          disabled={disableActions || voteApplied}
           onClick={onApplyVote}
         >
           <Bilingual zh="应用投票结果" en="Apply vote result" small />
         </button>
 
-        <button style={styles.primaryButton} onClick={onStartNextNight}>
+        <button
+          style={{
+            ...styles.primaryButton,
+            opacity: disableActions ? 0.5 : 1,
+            cursor: disableActions ? 'not-allowed' : 'pointer',
+          }}
+          disabled={disableActions}
+          onClick={onStartNextNight}
+        >
           <Bilingual zh="开始下一夜" en="Start next night" small />
         </button>
 
@@ -221,48 +260,64 @@ export default function DayResultScreen({
       <div style={{ marginTop: 20 }}>
         <Bilingual zh="玩家状态" en="Player status" small />
         <div style={styles.playerList}>
-          {players.map((player) => (
-            <div key={player.id} style={styles.playerRow}>
-              <div style={styles.seatTag}>{player.seat}号</div>
+          {players.map((player) => {
+            const isRevealedIdiot =
+              player.role === '白痴' && player.idiotRevealed;
 
-              <div style={{ minWidth: 120 }}>
-                <Bilingual zh={player.name} en={player.name} small />
+            return (
+              <div key={player.id} style={styles.playerRow}>
+                <div style={styles.seatTag}>{player.seat}号</div>
+
+                <div style={{ minWidth: 120 }}>
+                  <Bilingual zh={player.name} en={player.name} small />
+                </div>
+
+                <div
+                  style={{
+                    minWidth: 120,
+                    color: isRevealedIdiot ? '#dc2626' : '#111827',
+                    fontWeight: isRevealedIdiot ? 700 : 500,
+                  }}
+                >
+                  <Bilingual
+                    zh={roleLabel(player)}
+                    en={roleToEnglish(player)}
+                    small
+                  />
+                </div>
+
+                <div
+                  style={{
+                    ...styles.aliveBadge,
+                    background: player.alive ? '#dcfce7' : '#fee2e2',
+                    color: player.alive ? '#166534' : '#991b1b',
+                  }}
+                >
+                  <Bilingual
+                    zh={player.alive ? '存活' : '死亡'}
+                    en={player.alive ? 'Alive' : 'Dead'}
+                    small
+                  />
+                </div>
+
+                {canWhiteWolfKingExplode &&
+                  player.id === whiteWolfKingOwnerId &&
+                  player.alive && (
+                    <button
+                      style={{
+                        ...styles.explodeButton,
+                        opacity: disableActions ? 0.5 : 1,
+                        cursor: disableActions ? 'not-allowed' : 'pointer',
+                      }}
+                      disabled={disableActions}
+                      onClick={onStartWhiteWolfKingExplode}
+                    >
+                      <Bilingual zh="自爆" en="Explode" small />
+                    </button>
+                  )}
               </div>
-
-              <div style={{ minWidth: 90 }}>
-                <Bilingual
-                  zh={roleLabel(player.role)}
-                  en={roleToEnglish(player.role)}
-                  small
-                />
-              </div>
-
-              <div
-                style={{
-                  ...styles.aliveBadge,
-                  background: player.alive ? '#dcfce7' : '#fee2e2',
-                  color: player.alive ? '#166534' : '#991b1b',
-                }}
-              >
-                <Bilingual
-                  zh={player.alive ? '存活' : '死亡'}
-                  en={player.alive ? 'Alive' : 'Dead'}
-                  small
-                />
-              </div>
-
-              {canWhiteWolfKingExplode &&
-                player.id === whiteWolfKingOwnerId &&
-                player.alive && (
-                  <button
-                    style={styles.explodeButton}
-                    onClick={onStartWhiteWolfKingExplode}
-                  >
-                    <Bilingual zh="自爆" en="Explode" small />
-                  </button>
-                )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

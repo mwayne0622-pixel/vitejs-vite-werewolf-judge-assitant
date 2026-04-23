@@ -83,7 +83,7 @@ export default function FirstNightHunterScreen({
           disabled={!canGoNext}
           onClick={onNext}
         >
-          <Bilingual zh="天亮结算" en="Go to day result" small />
+          <Bilingual zh="下一步" en="Next" small />
         </button>
       </div>
     </section>

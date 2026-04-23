@@ -97,6 +97,15 @@ export default function SetupScreen({
           <label style={styles.checkboxCard}>
             <input
               type="checkbox"
+              checked={config.hasIdiot}
+              onChange={(e) => onUpdateConfig({ hasIdiot: e.target.checked })}
+            />
+            <Bilingual zh="白痴" en="Idiot" small />
+          </label>
+
+          <label style={styles.checkboxCard}>
+            <input
+              type="checkbox"
               checked={config.hasWhiteWolfKing}
               onChange={(e) =>
                 onUpdateConfig({ hasWhiteWolfKing: e.target.checked })
@@ -148,6 +157,10 @@ export default function SetupScreen({
         <div>
           <strong>村民数量：</strong>
           {config.villagerCount}
+        </div>
+        <div>
+          <strong>白痴：</strong>
+          {config.hasIdiot ? '开启' : '关闭'}
         </div>
         <div>
           <strong>白狼王：</strong>

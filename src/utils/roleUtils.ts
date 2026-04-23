@@ -1,6 +1,6 @@
 import type { Role } from '../types';
 
-const GOD_ROLES: Role[] = ['预言家', '女巫', '守卫', '猎人'];
+const GOD_ROLES: Role[] = ['预言家', '女巫', '守卫', '猎人', '白痴'];
 const WOLF_ROLES: Role[] = ['狼人', '白狼王'];
 const VILLAGER_ROLES: Role[] = ['村民'];
 

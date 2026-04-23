@@ -24,6 +24,7 @@ import FirstNightSeerScreen from './screens/FirstNightSeerScreen';
 import FirstNightWitchScreen from './screens/FirstNightWitchScreen';
 import FirstNightGuardScreen from './screens/FirstNightGuardScreen';
 import FirstNightHunterScreen from './screens/FirstNightHunterScreen';
+import FirstNightIdiotScreen from './screens/FirstNightIdiotScreen';
 
 import NightSeerScreen from './screens/NightSeerScreen';
 import NightWitchScreen from './screens/NightWitchScreen';
@@ -47,6 +48,7 @@ const defaultConfig: GameConfig = {
   hasGuard: true,
   hasHunter: false,
   hasWhiteWolfKing: false,
+  hasIdiot: false,
 };
 
 type VoteSummary = {
@@ -214,6 +216,9 @@ export default function App() {
   );
   const [hunterShotUsed, setHunterShotUsed] = useState(false);
 
+  const [idiotOwnerId, setIdiotOwnerId] = useState<number | null>(null);
+  const [draftIdiotOwnerId, setDraftIdiotOwnerId] = useState<number | null>(null);
+
   const [gameOver, setGameOver] = useState(false);
   const [gameResult, setGameResult] = useState<string | null>(null);
 
@@ -280,6 +285,9 @@ export default function App() {
       setHunterShotTargetId(data.hunterShotTargetId ?? null);
       setHunterShotUsed(Boolean(data.hunterShotUsed));
 
+      setIdiotOwnerId(data.idiotOwnerId ?? null);
+      setDraftIdiotOwnerId(data.draftIdiotOwnerId ?? null);
+
       setGameOver(Boolean(data.gameOver));
       setGameResult(data.gameResult ?? null);
     } catch {
@@ -332,6 +340,9 @@ export default function App() {
         hunterShotTargetId,
         hunterShotUsed,
 
+        idiotOwnerId,
+        draftIdiotOwnerId,
+
         gameOver,
         gameResult,
 
@@ -372,6 +383,8 @@ export default function App() {
     hunterShootSource,
     hunterShotTargetId,
     hunterShotUsed,
+    idiotOwnerId,
+    draftIdiotOwnerId,
     gameOver,
     gameResult,
     voteRound,
@@ -385,6 +398,7 @@ export default function App() {
   const witchRoleExists = config.hasWitch;
   const guardRoleExists = config.hasGuard;
   const hunterRoleExists = config.hasHunter;
+  const idiotRoleExists = config.hasIdiot;
 
   const aliveSeerExists = players.some((p) => p.alive && p.role === '预言家');
   const aliveWitchExists = players.some((p) => p.alive && p.role === '女巫');
@@ -396,10 +410,19 @@ export default function App() {
     witchOwnerId !== null || players.some((p) => p.role === '女巫');
   const guardConfirmed =
     guardOwnerId !== null || players.some((p) => p.role === '守卫');
+  const hunterConfirmed =
+    hunterOwnerId !== null || players.some((p) => p.role === '猎人');
+  const idiotConfirmed =
+    idiotOwnerId !== null || players.some((p) => p.role === '白痴');
 
   const seerIsDead = seerRoleExists && seerConfirmed && !aliveSeerExists;
   const witchIsDead = witchRoleExists && witchConfirmed && !aliveWitchExists;
   const guardIsDead = guardRoleExists && guardConfirmed && !aliveGuardExists;
+
+  const selectableForSingleGod = useMemo(
+    () => players.filter((p) => p.role === null),
+    [players]
+  );
 
   const wolfTarget = players.find((p) => p.id === wolfTargetId) ?? null;
   const checkedPlayer = players.find((p) => p.id === seerCheckId) ?? null;
@@ -433,11 +456,6 @@ export default function App() {
     (p) => whiteWolfKingPlayer !== null && p.id !== whiteWolfKingPlayer.id
   );
 
-  const selectableForSingleGod = useMemo(
-    () => players.filter((p) => p.role === null),
-    [players]
-  );
-
   const finalWitchSave = witchSave;
   const finalWitchPoisonId = witchSave ? null : witchPoisonId;
 
@@ -462,6 +480,10 @@ export default function App() {
     return players.filter((p) => p.alive && !deadSet.has(p.id));
   }, [players, dayApplied, dayResult.deadIds]);
 
+  const eligibleAliveVoters = alivePlayersAfterNight.filter(
+    (p) => !(p.role === '白痴' && p.idiotRevealed)
+  );
+
   const currentVoteTargets =
     voteRound === 2
       ? alivePlayersAfterNight.filter((p) => revoteCandidateIds.includes(p.id))
@@ -469,8 +491,8 @@ export default function App() {
 
   const currentVoters =
     voteRound === 2
-      ? alivePlayersAfterNight.filter((p) => !revoteCandidateIds.includes(p.id))
-      : alivePlayersAfterNight;
+      ? eligibleAliveVoters.filter((p) => !revoteCandidateIds.includes(p.id))
+      : eligibleAliveVoters;
 
   const allCurrentVotersVoted = currentVoters.every(
     (player) => votes[player.id] != null
@@ -535,6 +557,9 @@ export default function App() {
     setHunterOwnerId(null);
     setDraftHunterOwnerId(null);
 
+    setIdiotOwnerId(null);
+    setDraftIdiotOwnerId(null);
+
     setWitchSaveUsed(false);
     setWitchPoisonUsed(false);
     setLastGuardTargetId(null);
@@ -584,6 +609,9 @@ export default function App() {
 
     setHunterOwnerId(null);
     setDraftHunterOwnerId(null);
+
+    setIdiotOwnerId(null);
+    setDraftIdiotOwnerId(null);
 
     setWitchSaveUsed(false);
     setWitchPoisonUsed(false);
@@ -684,11 +712,44 @@ export default function App() {
       voteRound,
     });
 
+    const eliminatedPlayer =
+      latestSummary.eliminatedId !== null
+        ? players.find((p) => p.id === latestSummary.eliminatedId) ?? null
+        : null;
+
+    const idiotTriggered =
+      eliminatedPlayer !== null &&
+      eliminatedPlayer.role === '白痴' &&
+      !eliminatedPlayer.idiotRevealed;
+
     if (voteRound === 1 && latestSummary.shouldRevote) {
       setAppliedVoteSummary(latestSummary);
       setVoteRound(2);
       setRevoteCandidateIds(latestSummary.topTargets);
       setVotes({});
+      return;
+    }
+
+    if (idiotTriggered) {
+      const nextPlayers = players.map((p) =>
+        p.id === eliminatedPlayer.id ? { ...p, idiotRevealed: true } : p
+      );
+    
+      const idiotSummary = {
+        ...latestSummary,
+        eliminatedId: null,
+        isTie: false,
+        shouldRevote: false,
+        message: `白痴翻牌：${eliminatedPlayer.seat}号免于出局，本轮无人被放逐`,
+        english: `Idiot revealed: Seat ${eliminatedPlayer.seat} survives, no one is eliminated this round`,
+      };
+    
+      setAppliedVoteSummary(idiotSummary);
+      setPlayers(nextPlayers);
+      setVoteApplied(true);
+      setPhase('day-result');
+    
+      checkGameOver(nextPlayers);
       return;
     }
 
@@ -852,6 +913,8 @@ export default function App() {
   function commitHunterAndNext() {
     if (draftHunterOwnerId === null) return;
 
+    const nextPhase = getNextFirstNightPhase(config, 'first-night-hunter');
+
     const nextPlayers: Player[] = players.map((p): Player => {
       if (p.role === '猎人' && p.id !== draftHunterOwnerId) {
         return { ...p, role: null };
@@ -862,8 +925,34 @@ export default function App() {
       return p;
     });
 
-    setPlayers(finalizeUnassignedVillagers(nextPlayers));
+    if (nextPhase === 'day-result') {
+      setPlayers(finalizeUnassignedVillagers(nextPlayers));
+      setHunterOwnerId(draftHunterOwnerId);
+      setFirstNightDone(true);
+      setPhase('day-result');
+      return;
+    }
+
+    setPlayers(nextPlayers);
     setHunterOwnerId(draftHunterOwnerId);
+    setPhase(nextPhase);
+  }
+
+  function commitIdiotAndNext() {
+    if (draftIdiotOwnerId === null) return;
+
+    const nextPlayers: Player[] = players.map((p): Player => {
+      if (p.role === '白痴' && p.id !== draftIdiotOwnerId) {
+        return { ...p, role: null };
+      }
+      if (p.id === draftIdiotOwnerId) {
+        return { ...p, role: '白痴' };
+      }
+      return p;
+    });
+
+    setPlayers(finalizeUnassignedVillagers(nextPlayers));
+    setIdiotOwnerId(draftIdiotOwnerId);
     setFirstNightDone(true);
     setPhase('day-result');
   }
@@ -1134,6 +1223,20 @@ export default function App() {
           />
         )}
 
+        {phase === 'first-night-idiot' && idiotRoleExists && (
+          <FirstNightIdiotScreen
+            players={players}
+            draftIdiotOwnerId={draftIdiotOwnerId}
+            selectablePlayers={selectableForSingleGod}
+            canGoNext={draftIdiotOwnerId !== null}
+            onSelectIdiot={(playerId) => setDraftIdiotOwnerId(playerId)}
+            onBack={() =>
+              setPhase(getPrevFirstNightPhase(config, 'first-night-idiot'))
+            }
+            onNext={commitIdiotAndNext}
+          />
+        )}
+
         {phase === 'night-wolf' && (
           <NightWolfScreen
             alivePlayers={alivePlayers}
@@ -1208,6 +1311,8 @@ export default function App() {
             whiteWolfKingOwnerId={whiteWolfKingOwnerId}
             canWhiteWolfKingExplode={canWhiteWolfKingExplode}
             onStartWhiteWolfKingExplode={startWhiteWolfKingExplode}
+            getRoleDisplay={getRoleDisplay}
+            gameOver={gameOver}
           />
         )}
 
@@ -1260,6 +1365,7 @@ function createBlankPlayers(count: number): Player[] {
     name: `玩家${i + 1}`,
     role: null as MaybeRole,
     alive: true,
+    idiotRevealed: false
   }));
 }
 
@@ -1291,6 +1397,12 @@ function getPhaseLabel(phase: Phase) {
       return '夜晚：守卫行动';
     case 'hunter-shoot':
       return '猎人开枪';
+    case 'first-night-idiot':
+      return '第一夜：白痴';
+    case 'first-night-white-wolf-king':
+      return '第一夜：白狼王';
+    case 'white-wolf-king-explode':
+      return '白狼王自爆';
     default:
       return phase;
   }
@@ -1324,9 +1436,25 @@ function getPhaseEnglish(phase: Phase) {
       return 'Current phase: Night - Guard acts';
     case 'hunter-shoot':
       return 'Current phase: Hunter shoots';
+    case 'first-night-idiot':
+      return 'Current phase: First night - Idiot';
+    case 'first-night-white-wolf-king':
+      return 'Current phase: First night - White Wolf King';
+    case 'white-wolf-king-explode':
+      return 'Current phase: White Wolf King explodes';
     default:
       return phase;
   }
+}
+
+function getRoleDisplay(player: Player): string {
+  if (!player.role) return '未分配';
+
+  if (player.role === '白痴' && player.idiotRevealed) {
+    return '白痴（已翻牌）';
+  }
+
+  return player.role;
 }
 
 const styles: Record<string, CSSProperties> = {
