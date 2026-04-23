@@ -410,10 +410,6 @@ export default function App() {
     witchOwnerId !== null || players.some((p) => p.role === '女巫');
   const guardConfirmed =
     guardOwnerId !== null || players.some((p) => p.role === '守卫');
-  const hunterConfirmed =
-    hunterOwnerId !== null || players.some((p) => p.role === '猎人');
-  const idiotConfirmed =
-    idiotOwnerId !== null || players.some((p) => p.role === '白痴');
 
   const seerIsDead = seerRoleExists && seerConfirmed && !aliveSeerExists;
   const witchIsDead = witchRoleExists && witchConfirmed && !aliveWitchExists;
@@ -1311,7 +1307,6 @@ export default function App() {
             whiteWolfKingOwnerId={whiteWolfKingOwnerId}
             canWhiteWolfKingExplode={canWhiteWolfKingExplode}
             onStartWhiteWolfKingExplode={startWhiteWolfKingExplode}
-            getRoleDisplay={getRoleDisplay}
             gameOver={gameOver}
           />
         )}
@@ -1445,16 +1440,6 @@ function getPhaseEnglish(phase: Phase) {
     default:
       return phase;
   }
-}
-
-function getRoleDisplay(player: Player): string {
-  if (!player.role) return '未分配';
-
-  if (player.role === '白痴' && player.idiotRevealed) {
-    return '白痴（已翻牌）';
-  }
-
-  return player.role;
 }
 
 const styles: Record<string, CSSProperties> = {
