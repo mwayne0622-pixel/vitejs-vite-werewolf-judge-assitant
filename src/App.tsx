@@ -480,10 +480,14 @@ export default function App() {
     (p) => !(p.role === '白痴' && p.idiotRevealed)
   );
 
+  const eligibleVoteTargets = alivePlayersAfterNight.filter(
+    (p) => !(p.role === '白痴' && p.idiotRevealed)
+  );
+
   const currentVoteTargets =
     voteRound === 2
-      ? alivePlayersAfterNight.filter((p) => revoteCandidateIds.includes(p.id))
-      : alivePlayersAfterNight;
+      ? eligibleVoteTargets.filter((p) => revoteCandidateIds.includes(p.id))
+      : eligibleVoteTargets;
 
   const currentVoters =
     voteRound === 2
@@ -718,6 +722,11 @@ export default function App() {
       eliminatedPlayer.role === '白痴' &&
       !eliminatedPlayer.idiotRevealed;
 
+    const revealedIdiotWasTargeted =
+      eliminatedPlayer !== null &&
+      eliminatedPlayer.role === '白痴' &&
+      eliminatedPlayer.idiotRevealed;
+
     if (voteRound === 1 && latestSummary.shouldRevote) {
       setAppliedVoteSummary(latestSummary);
       setVoteRound(2);
@@ -730,7 +739,7 @@ export default function App() {
       const nextPlayers = players.map((p) =>
         p.id === eliminatedPlayer.id ? { ...p, idiotRevealed: true } : p
       );
-    
+
       const idiotSummary = {
         ...latestSummary,
         eliminatedId: null,
@@ -739,13 +748,29 @@ export default function App() {
         message: `白痴翻牌：${eliminatedPlayer.seat}号免于出局，本轮无人被放逐`,
         english: `Idiot revealed: Seat ${eliminatedPlayer.seat} survives, no one is eliminated this round`,
       };
-    
+
       setAppliedVoteSummary(idiotSummary);
       setPlayers(nextPlayers);
       setVoteApplied(true);
       setPhase('day-result');
-    
+
       checkGameOver(nextPlayers);
+      return;
+    }
+
+    if (revealedIdiotWasTargeted) {
+      const blockedSummary = {
+        ...latestSummary,
+        eliminatedId: null,
+        isTie: false,
+        shouldRevote: false,
+        message: `已翻牌白痴不能被再次放逐，本轮无人被放逐`,
+        english: `A revealed Idiot cannot be voted out again. No one is eliminated this round`,
+      };
+    
+      setAppliedVoteSummary(blockedSummary);
+      setVoteApplied(true);
+      setPhase('day-result');
       return;
     }
 
