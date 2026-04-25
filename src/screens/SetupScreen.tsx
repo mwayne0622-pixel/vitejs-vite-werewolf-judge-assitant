@@ -113,6 +113,17 @@ export default function SetupScreen({
             />
             <Bilingual zh="白狼王" en="White Wolf King" small />
           </label>
+
+          <label style={styles.checkboxCard}>
+            <input
+              type="checkbox"
+              checked={config.hasBear}
+              onChange={(e) =>
+                onUpdateConfig({ hasBear: e.target.checked })
+              }
+            />
+            <Bilingual zh="熊" en="Bear" small />
+          </label>
         </div>
       </div>
 
@@ -165,6 +176,10 @@ export default function SetupScreen({
         <div>
           <strong>白狼王：</strong>
           {config.hasWhiteWolfKing ? '开启' : '关闭'}
+        </div>
+        <div>
+          <strong>熊：</strong>
+          {config.hasBear ? '开启' : '关闭'}
         </div>
         <div>
           <strong>总人数：</strong>

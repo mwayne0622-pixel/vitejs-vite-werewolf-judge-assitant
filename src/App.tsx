@@ -36,6 +36,9 @@ import HunterShootScreen from './screens/HunterShootScreen';
 import FirstNightWhiteWolfKingScreen from './screens/FirstNightWhiteWolfKingScreen';
 import WhiteWolfKingExplodeScreen from './screens/WhiteWolfKingExplodeScreen';
 
+import FirstNightBearScreen from './screens/FirstNightBearScreen';
+import { getBearInfo } from './utils/bearLogic';
+
 import { isGod, isWolf, isVillager } from './utils/roleUtils';
 
 const STORAGE_KEY = 'wolf-judge-assistant-vote-split-v2';
@@ -49,6 +52,7 @@ const defaultConfig: GameConfig = {
   hasHunter: false,
   hasWhiteWolfKing: false,
   hasIdiot: false,
+  hasBear: false,
 };
 
 type VoteSummary = {
@@ -219,6 +223,9 @@ export default function App() {
   const [idiotOwnerId, setIdiotOwnerId] = useState<number | null>(null);
   const [draftIdiotOwnerId, setDraftIdiotOwnerId] = useState<number | null>(null);
 
+  const [draftBearOwnerId, setDraftBearOwnerId] = useState<number | null>(null);
+  const [bearOwnerId, setBearOwnerId] = useState<number | null>(null);
+
   const [gameOver, setGameOver] = useState(false);
   const [gameResult, setGameResult] = useState<string | null>(null);
 
@@ -288,6 +295,9 @@ export default function App() {
       setIdiotOwnerId(data.idiotOwnerId ?? null);
       setDraftIdiotOwnerId(data.draftIdiotOwnerId ?? null);
 
+      setBearOwnerId(data.bearOwnerId ?? null);
+      setDraftBearOwnerId(data.draftBearOwnerId ?? null);
+
       setGameOver(Boolean(data.gameOver));
       setGameResult(data.gameResult ?? null);
     } catch {
@@ -343,6 +353,9 @@ export default function App() {
         idiotOwnerId,
         draftIdiotOwnerId,
 
+        bearOwnerId,
+        draftBearOwnerId,
+
         gameOver,
         gameResult,
 
@@ -385,6 +398,8 @@ export default function App() {
     hunterShotUsed,
     idiotOwnerId,
     draftIdiotOwnerId,
+    bearOwnerId,
+    draftBearOwnerId,
     gameOver,
     gameResult,
     voteRound,
@@ -399,6 +414,7 @@ export default function App() {
   const guardRoleExists = config.hasGuard;
   const hunterRoleExists = config.hasHunter;
   const idiotRoleExists = config.hasIdiot;
+  const bearRoleExists = config.hasBear;
 
   const aliveSeerExists = players.some((p) => p.alive && p.role === '预言家');
   const aliveWitchExists = players.some((p) => p.alive && p.role === '女巫');
@@ -470,6 +486,15 @@ export default function App() {
     finalWitchPoisonId,
     guardTargetId,
   ]);
+
+  const bearInfo = useMemo(() => {
+    if (!bearRoleExists) return null;
+    if (!dayApplied) return null;
+    if (phase !== 'day-result') return null;
+    if (voteApplied) return null;
+  
+    return getBearInfo(players);
+  }, [bearRoleExists, dayApplied, phase, voteApplied, players]);
 
   const alivePlayersAfterNight = useMemo(() => {
     const deadSet = new Set(dayApplied ? [] : dayResult.deadIds);
@@ -560,6 +585,9 @@ export default function App() {
     setIdiotOwnerId(null);
     setDraftIdiotOwnerId(null);
 
+    setBearOwnerId(null);
+    setDraftBearOwnerId(null);
+
     setWitchSaveUsed(false);
     setWitchPoisonUsed(false);
     setLastGuardTargetId(null);
@@ -612,6 +640,9 @@ export default function App() {
 
     setIdiotOwnerId(null);
     setDraftIdiotOwnerId(null);
+
+    setBearOwnerId(null);
+    setDraftBearOwnerId(null);
 
     setWitchSaveUsed(false);
     setWitchPoisonUsed(false);
@@ -767,7 +798,7 @@ export default function App() {
         message: `已翻牌白痴不能被再次放逐，本轮无人被放逐`,
         english: `A revealed Idiot cannot be voted out again. No one is eliminated this round`,
       };
-    
+
       setAppliedVoteSummary(blockedSummary);
       setVoteApplied(true);
       setPhase('day-result');
@@ -961,7 +992,9 @@ export default function App() {
 
   function commitIdiotAndNext() {
     if (draftIdiotOwnerId === null) return;
-
+  
+    const nextPhase = getNextFirstNightPhase(config, 'first-night-idiot');
+  
     const nextPlayers: Player[] = players.map((p): Player => {
       if (p.role === '白痴' && p.id !== draftIdiotOwnerId) {
         return { ...p, role: null };
@@ -971,11 +1004,46 @@ export default function App() {
       }
       return p;
     });
-
-    setPlayers(finalizeUnassignedVillagers(nextPlayers));
+  
+    if (nextPhase === 'day-result') {
+      setPlayers(finalizeUnassignedVillagers(nextPlayers));
+      setIdiotOwnerId(draftIdiotOwnerId);
+      setFirstNightDone(true);
+      setPhase('day-result');
+      return;
+    }
+  
+    setPlayers(nextPlayers);
     setIdiotOwnerId(draftIdiotOwnerId);
-    setFirstNightDone(true);
-    setPhase('day-result');
+    setPhase(nextPhase);
+  }
+
+  function commitBearAndNext() {
+    if (draftBearOwnerId === null) return;
+
+    const nextPhase = getNextFirstNightPhase(config, 'first-night-bear');
+
+    const nextPlayers: Player[] = players.map((p): Player => {
+      if (p.role === '熊' && p.id !== draftBearOwnerId) {
+        return { ...p, role: null };
+      }
+      if (p.id === draftBearOwnerId) {
+        return { ...p, role: '熊' };
+      }
+      return p;
+    });
+
+    if (nextPhase === 'day-result') {
+      setPlayers(finalizeUnassignedVillagers(nextPlayers));
+      setBearOwnerId(draftBearOwnerId);
+      setFirstNightDone(true);
+      setPhase('day-result');
+      return;
+    }
+
+    setPlayers(nextPlayers);
+    setBearOwnerId(draftBearOwnerId);
+    setPhase(nextPhase);
   }
 
   function startWhiteWolfKingExplode() {
@@ -1089,6 +1157,8 @@ export default function App() {
     !guardRoleExists || (draftGuardOwnerId !== null && guardTargetId !== null);
   const firstNightHunterReady =
     !hunterRoleExists || draftHunterOwnerId !== null;
+  const firstNightBearReady =
+    !bearRoleExists || draftBearOwnerId !== null;
 
   const blockSelfSave =
     firstNightDone &&
@@ -1117,12 +1187,6 @@ export default function App() {
             />
           </div>
         </div>
-
-        {gameOver && gameResult && (
-          <div style={styles.gameOverBox}>
-            <Bilingual zh={gameResult} en={gameResult} align="center" />
-          </div>
-        )}
 
         <div style={styles.phaseBar}>
           <Bilingual
@@ -1258,6 +1322,18 @@ export default function App() {
           />
         )}
 
+        {phase === 'first-night-bear' && bearRoleExists && (
+          <FirstNightBearScreen
+            players={players}
+            draftBearOwnerId={draftBearOwnerId}
+            selectablePlayers={players.filter((p) => p.role === null)}
+            canGoNext={firstNightBearReady}
+            onSelectBear={setDraftBearOwnerId}
+            onBack={() => setPhase(getPrevFirstNightPhase(config, 'first-night-bear'))}
+            onNext={commitBearAndNext}
+          />
+        )}
+
         {phase === 'night-wolf' && (
           <NightWolfScreen
             alivePlayers={alivePlayers}
@@ -1329,10 +1405,12 @@ export default function App() {
             onApplyVote={applyVoteResult}
             onStartNextNight={startNextNight}
             onReset={resetCurrentGame}
+            bearInfo={bearInfo}
             whiteWolfKingOwnerId={whiteWolfKingOwnerId}
             canWhiteWolfKingExplode={canWhiteWolfKingExplode}
             onStartWhiteWolfKingExplode={startWhiteWolfKingExplode}
             gameOver={gameOver}
+            gameResult={gameResult}
           />
         )}
 
@@ -1403,6 +1481,8 @@ function getPhaseLabel(phase: Phase) {
       return '第一夜：守卫';
     case 'first-night-hunter':
       return '第一夜：猎人';
+    case 'first-night-bear':
+      return '第一夜：熊';
     case 'day-result':
       return '天亮结果';
     case 'day-vote':
@@ -1442,6 +1522,8 @@ function getPhaseEnglish(phase: Phase) {
       return 'Current phase: First night - Guard';
     case 'first-night-hunter':
       return 'Current phase: First night - Hunter';
+    case 'first-night-bear':
+      return 'Current phase: First night - Bear';
     case 'day-result':
       return 'Current phase: Day result';
     case 'day-vote':
@@ -1567,14 +1649,5 @@ const styles: Record<string, CSSProperties> = {
     gap: 10,
     fontSize: 15,
     color: '#111827',
-  },
-  gameOverBox: {
-    marginBottom: 20,
-    padding: 16,
-    borderRadius: 16,
-    background: '#fef3c7',
-    color: '#92400e',
-    border: '1px solid #f59e0b',
-    fontWeight: 700,
   },
 };

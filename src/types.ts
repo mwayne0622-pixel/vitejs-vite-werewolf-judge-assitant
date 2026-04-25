@@ -6,7 +6,9 @@ export type Role =
   | '守卫'
   | '猎人'
   | '白痴'
+  | '熊'
   | '村民';
+
 export type MaybeRole = Role | null;
 
 export type Phase =
@@ -17,6 +19,7 @@ export type Phase =
   | 'first-night-guard'
   | 'first-night-hunter'
   | 'first-night-idiot'
+  | 'first-night-bear'
   | 'first-night-white-wolf-king'
   | 'white-wolf-king-explode'
   | 'day-result'
@@ -26,17 +29,15 @@ export type Phase =
   | 'night-seer'
   | 'night-witch'
   | 'night-guard';
-  
 
-
-  export type Player = {
-    id: number;
-    seat: number;
-    name: string;
-    role: MaybeRole;
-    alive: boolean;
-    idiotRevealed: boolean;
-  };
+export type Player = {
+  id: number;
+  seat: number;
+  name: string;
+  role: MaybeRole;
+  alive: boolean;
+  idiotRevealed: boolean;
+};
 
 export type GameConfig = {
   villagerCount: number;
@@ -47,4 +48,5 @@ export type GameConfig = {
   hasHunter: boolean;
   hasWhiteWolfKing: boolean;
   hasIdiot: boolean;
+  hasBear: boolean;
 };
