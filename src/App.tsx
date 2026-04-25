@@ -1391,18 +1391,12 @@ export default function App() {
           <DayResultScreen
             players={players}
             dayResult={dayResult}
-            wolfTargetId={wolfTargetId}
-            seerCheckId={seerCheckId}
-            witchSave={finalWitchSave}
-            witchPoisonId={finalWitchPoisonId}
-            guardTargetId={guardTargetId}
             voteSummary={displayVoteSummary}
             voteApplied={voteApplied}
             dayApplied={dayApplied}
             onBack={() => setPhase(getPrevNightPhase(config, 'day-result'))}
             onApplyDayResult={applyDayResult}
             onGoToVote={() => setPhase('day-vote')}
-            onApplyVote={applyVoteResult}
             onStartNextNight={startNextNight}
             onReset={resetCurrentGame}
             bearInfo={bearInfo}

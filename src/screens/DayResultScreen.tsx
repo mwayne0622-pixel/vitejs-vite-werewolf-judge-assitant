@@ -27,12 +27,6 @@ type Props = {
   players: Player[];
   dayResult: DayResult;
 
-  wolfTargetId: number | null;
-  seerCheckId: number | null;
-  witchSave: boolean;
-  witchPoisonId: number | null;
-  guardTargetId: number | null;
-
   voteSummary: VoteSummary;
   voteApplied: boolean;
 
@@ -50,7 +44,6 @@ type Props = {
   onBack: () => void;
   onApplyDayResult: () => void;
   onGoToVote: () => void;
-  onApplyVote: () => void;
   onStartNextNight: () => void;
   onReset: () => void;
 };
@@ -95,12 +88,6 @@ export default function DayResultScreen({
   players,
   dayResult,
 
-  wolfTargetId,
-  seerCheckId,
-  witchSave,
-  witchPoisonId,
-  guardTargetId,
-
   voteSummary,
   voteApplied,
   dayApplied,
@@ -115,7 +102,6 @@ export default function DayResultScreen({
   onBack,
   onApplyDayResult,
   onGoToVote,
-  onApplyVote,
   onStartNextNight,
   onStartWhiteWolfKingExplode,
   onReset,
