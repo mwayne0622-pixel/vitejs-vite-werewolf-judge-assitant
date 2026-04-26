@@ -28,6 +28,7 @@ export function getNextFirstNightPhase(
 ): Phase {
   if (current === 'first-night-wolf') {
     if (config.hasWhiteWolfKing) return 'first-night-white-wolf-king';
+    if (config.hasWolfBeauty) return 'first-night-wolf-beauty';
     if (config.hasSeer) return 'first-night-seer';
     if (config.hasWitch) return 'first-night-witch';
     if (config.hasGuard) return 'first-night-guard';
@@ -38,6 +39,17 @@ export function getNextFirstNightPhase(
   }
 
   if (current === 'first-night-white-wolf-king') {
+    if (config.hasWolfBeauty) return 'first-night-wolf-beauty';
+    if (config.hasSeer) return 'first-night-seer';
+    if (config.hasWitch) return 'first-night-witch';
+    if (config.hasGuard) return 'first-night-guard';
+    if (config.hasHunter) return 'first-night-hunter';
+    if (config.hasIdiot) return 'first-night-idiot';
+    if (config.hasBear) return 'first-night-bear';
+    return 'day-result';
+  }
+
+  if (current === 'first-night-wolf-beauty') {
     if (config.hasSeer) return 'first-night-seer';
     if (config.hasWitch) return 'first-night-witch';
     if (config.hasGuard) return 'first-night-guard';
@@ -97,13 +109,20 @@ export function getPrevFirstNightPhase(
     return 'first-night-wolf';
   }
 
+  if (current === 'first-night-wolf-beauty') {
+    if (config.hasWhiteWolfKing) return 'first-night-white-wolf-king';
+    return 'first-night-wolf';
+  }
+
   if (current === 'first-night-seer') {
+    if (config.hasWolfBeauty) return 'first-night-wolf-beauty';
     if (config.hasWhiteWolfKing) return 'first-night-white-wolf-king';
     return 'first-night-wolf';
   }
 
   if (current === 'first-night-witch') {
     if (config.hasSeer) return 'first-night-seer';
+    if (config.hasWolfBeauty) return 'first-night-wolf-beauty';
     if (config.hasWhiteWolfKing) return 'first-night-white-wolf-king';
     return 'first-night-wolf';
   }
@@ -111,6 +130,7 @@ export function getPrevFirstNightPhase(
   if (current === 'first-night-guard') {
     if (config.hasWitch) return 'first-night-witch';
     if (config.hasSeer) return 'first-night-seer';
+    if (config.hasWolfBeauty) return 'first-night-wolf-beauty';
     if (config.hasWhiteWolfKing) return 'first-night-white-wolf-king';
     return 'first-night-wolf';
   }
@@ -119,6 +139,7 @@ export function getPrevFirstNightPhase(
     if (config.hasGuard) return 'first-night-guard';
     if (config.hasWitch) return 'first-night-witch';
     if (config.hasSeer) return 'first-night-seer';
+    if (config.hasWolfBeauty) return 'first-night-wolf-beauty';
     if (config.hasWhiteWolfKing) return 'first-night-white-wolf-king';
     return 'first-night-wolf';
   }
@@ -128,6 +149,7 @@ export function getPrevFirstNightPhase(
     if (config.hasGuard) return 'first-night-guard';
     if (config.hasWitch) return 'first-night-witch';
     if (config.hasSeer) return 'first-night-seer';
+    if (config.hasWolfBeauty) return 'first-night-wolf-beauty';
     if (config.hasWhiteWolfKing) return 'first-night-white-wolf-king';
     return 'first-night-wolf';
   }
@@ -138,6 +160,7 @@ export function getPrevFirstNightPhase(
     if (config.hasGuard) return 'first-night-guard';
     if (config.hasWitch) return 'first-night-witch';
     if (config.hasSeer) return 'first-night-seer';
+    if (config.hasWolfBeauty) return 'first-night-wolf-beauty';
     if (config.hasWhiteWolfKing) return 'first-night-white-wolf-king';
     return 'first-night-wolf';
   }
@@ -146,6 +169,14 @@ export function getPrevFirstNightPhase(
 }
 
 export function getNextNightPhaseAfterWolf(config: GameConfig): Phase {
+  if (config.hasWolfBeauty) return 'night-wolf-beauty';
+  if (config.hasSeer) return 'night-seer';
+  if (config.hasWitch) return 'night-witch';
+  if (config.hasGuard) return 'night-guard';
+  return 'day-result';
+}
+
+export function getNextNightPhaseAfterWolfBeauty(config: GameConfig): Phase {
   if (config.hasSeer) return 'night-seer';
   if (config.hasWitch) return 'night-witch';
   if (config.hasGuard) return 'night-guard';
@@ -164,16 +195,23 @@ export function getNextNightPhaseAfterWitch(config: GameConfig): Phase {
 }
 
 export function getPrevNightPhase(config: GameConfig, current: Phase): Phase {
-  if (current === 'night-seer') return 'night-wolf';
+  if (current === 'night-wolf-beauty') return 'night-wolf';
+
+  if (current === 'night-seer') {
+    if (config.hasWolfBeauty) return 'night-wolf-beauty';
+    return 'night-wolf';
+  }
 
   if (current === 'night-witch') {
     if (config.hasSeer) return 'night-seer';
+    if (config.hasWolfBeauty) return 'night-wolf-beauty';
     return 'night-wolf';
   }
 
   if (current === 'night-guard') {
     if (config.hasWitch) return 'night-witch';
     if (config.hasSeer) return 'night-seer';
+    if (config.hasWolfBeauty) return 'night-wolf-beauty';
     return 'night-wolf';
   }
 
@@ -181,6 +219,7 @@ export function getPrevNightPhase(config: GameConfig, current: Phase): Phase {
     if (config.hasGuard) return 'night-guard';
     if (config.hasWitch) return 'night-witch';
     if (config.hasSeer) return 'night-seer';
+    if (config.hasWolfBeauty) return 'night-wolf-beauty';
     return 'night-wolf';
   }
 

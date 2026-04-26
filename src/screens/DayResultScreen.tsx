@@ -39,6 +39,9 @@ type Props = {
 
   bearInfo: BearInfo | null;
 
+  wolfBeautyLoverMessage: string | null;
+  wolfBeautyLoverEnglish: string | null;
+
   onStartWhiteWolfKingExplode: () => void;
 
   onBack: () => void;
@@ -65,6 +68,8 @@ function roleToEnglish(player: Player) {
       return 'Wolf';
     case '白狼王':
       return 'White Wolf King';
+    case '狼美人':
+      return 'Wolf Beauty';
     case '预言家':
       return 'Seer';
     case '女巫':
@@ -98,6 +103,9 @@ export default function DayResultScreen({
   canWhiteWolfKingExplode,
 
   bearInfo,
+
+  wolfBeautyLoverMessage,
+  wolfBeautyLoverEnglish,
 
   onBack,
   onApplyDayResult,
@@ -160,6 +168,16 @@ export default function DayResultScreen({
                     />
                   </div>
                 )}
+              </div>
+            )}
+
+            {wolfBeautyLoverMessage && wolfBeautyLoverEnglish && (
+              <div style={styles.warningBox}>
+                <Bilingual
+                  zh={wolfBeautyLoverMessage}
+                  en={wolfBeautyLoverEnglish}
+                  small
+                />
               </div>
             )}
 
@@ -436,5 +454,13 @@ const styles: Record<string, CSSProperties> = {
     cursor: 'pointer',
     fontWeight: 700,
     marginLeft: 'auto',
+  },
+  warningBox: {
+    marginTop: 16,
+    padding: 14,
+    borderRadius: 14,
+    background: '#fff7ed',
+    color: '#9a3412',
+    border: '1px solid #fdba74',
   },
 };

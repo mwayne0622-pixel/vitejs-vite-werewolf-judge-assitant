@@ -1,6 +1,7 @@
 export type Role =
   | '狼人'
   | '白狼王'
+  | '狼美人'
   | '预言家'
   | '女巫'
   | '守卫'
@@ -21,11 +22,13 @@ export type Phase =
   | 'first-night-idiot'
   | 'first-night-bear'
   | 'first-night-white-wolf-king'
+  | 'first-night-wolf-beauty'
   | 'white-wolf-king-explode'
   | 'day-result'
   | 'day-vote'
   | 'hunter-shoot'
   | 'night-wolf'
+  | 'night-wolf-beauty'
   | 'night-seer'
   | 'night-witch'
   | 'night-guard';
@@ -49,4 +52,5 @@ export type GameConfig = {
   hasWhiteWolfKing: boolean;
   hasIdiot: boolean;
   hasBear: boolean;
+  hasWolfBeauty: boolean;
 };

@@ -10,6 +10,7 @@ import {
   getNextFirstNightPhase,
   getPrevFirstNightPhase,
   getNextNightPhaseAfterWolf,
+  getNextNightPhaseAfterWolfBeauty,
   getNextNightPhaseAfterSeer,
   getNextNightPhaseAfterWitch,
   getPrevNightPhase,
@@ -36,8 +37,16 @@ import HunterShootScreen from './screens/HunterShootScreen';
 import FirstNightWhiteWolfKingScreen from './screens/FirstNightWhiteWolfKingScreen';
 import WhiteWolfKingExplodeScreen from './screens/WhiteWolfKingExplodeScreen';
 
+import FirstNightWolfBeautyScreen from './screens/FirstNightWolfBeautyScreen';
+import NightWolfBeautyScreen from './screens/NightWolfBeautyScreen';
+
 import FirstNightBearScreen from './screens/FirstNightBearScreen';
 import { getBearInfo } from './utils/bearLogic';
+import {
+  shouldTriggerWolfBeautyLoverDeath,
+  getWolfBeautyCharmedPlayer,
+  type WolfBeautyDeathSource,
+} from './utils/wolfBeautyLogic';
 
 import { isGod, isWolf, isVillager } from './utils/roleUtils';
 
@@ -48,9 +57,10 @@ const defaultConfig: GameConfig = {
   wolfCount: 2,
   hasSeer: true,
   hasWitch: true,
-  hasGuard: true,
+  hasGuard: false,
   hasHunter: false,
   hasWhiteWolfKing: false,
+  hasWolfBeauty: false,
   hasIdiot: false,
   hasBear: false,
 };
@@ -172,6 +182,15 @@ export default function App() {
   const [whiteWolfKingExploded, setWhiteWolfKingExploded] = useState(false);
   const [whiteWolfKingExplodeTargetId, setWhiteWolfKingExplodeTargetId] = useState<number | null>(null);
 
+  const [wolfBeautyOwnerId, setWolfBeautyOwnerId] = useState<number | null>(null);
+  const [draftWolfBeautyOwnerId, setDraftWolfBeautyOwnerId] = useState<number | null>(null);
+
+  const [wolfBeautyCharmTargetId, setWolfBeautyCharmTargetId] = useState<number | null>(null);
+  const [lastWolfBeautyCharmTargetId, setLastWolfBeautyCharmTargetId] = useState<number | null>(null);
+
+  const [wolfBeautyLoverMessage, setWolfBeautyLoverMessage] = useState<string | null>(null);
+  const [wolfBeautyLoverEnglish, setWolfBeautyLoverEnglish] = useState<string | null>(null);
+
   const [seerOwnerId, setSeerOwnerId] = useState<number | null>(null);
   const [draftSeerOwnerId, setDraftSeerOwnerId] = useState<number | null>(null);
   const [seerCheckId, setSeerCheckId] = useState<number | null>(null);
@@ -260,6 +279,13 @@ export default function App() {
       setWhiteWolfKingExploded(Boolean(data.whiteWolfKingExploded));
       setWhiteWolfKingExplodeTargetId(data.whiteWolfKingExplodeTargetId ?? null);
 
+      setWolfBeautyOwnerId(data.wolfBeautyOwnerId ?? null);
+      setDraftWolfBeautyOwnerId(data.draftWolfBeautyOwnerId ?? null);
+      setWolfBeautyCharmTargetId(data.wolfBeautyCharmTargetId ?? null);
+      setLastWolfBeautyCharmTargetId(data.lastWolfBeautyCharmTargetId ?? null);
+      setWolfBeautyLoverMessage(data.wolfBeautyLoverMessage ?? null);
+      setWolfBeautyLoverEnglish(data.wolfBeautyLoverEnglish ?? null);
+
       setSeerOwnerId(data.seerOwnerId ?? null);
       setDraftSeerOwnerId(data.draftSeerOwnerId ?? null);
       setSeerCheckId(data.seerCheckId ?? null);
@@ -322,6 +348,13 @@ export default function App() {
         whiteWolfKingExploded,
         whiteWolfKingExplodeTargetId,
 
+        wolfBeautyOwnerId,
+        draftWolfBeautyOwnerId,
+        wolfBeautyCharmTargetId,
+        lastWolfBeautyCharmTargetId,
+        wolfBeautyLoverMessage,
+        wolfBeautyLoverEnglish,
+
         seerOwnerId,
         draftSeerOwnerId,
         seerCheckId,
@@ -375,6 +408,12 @@ export default function App() {
     draftWhiteWolfKingOwnerId,
     whiteWolfKingExploded,
     whiteWolfKingExplodeTargetId,
+    wolfBeautyOwnerId,
+    draftWolfBeautyOwnerId,
+    wolfBeautyCharmTargetId,
+    lastWolfBeautyCharmTargetId,
+    wolfBeautyLoverMessage,
+    wolfBeautyLoverEnglish,
     seerOwnerId,
     draftSeerOwnerId,
     seerCheckId,
@@ -450,6 +489,23 @@ export default function App() {
       ? players.find((p) => p.id === whiteWolfKingOwnerId) ?? null
       : players.find((p) => p.role === '白狼王') ?? null;
 
+  const wolfBeautyPlayer =
+    wolfBeautyOwnerId !== null
+      ? players.find((p) => p.id === wolfBeautyOwnerId) ?? null
+      : null;
+
+  const wolfBeautyRoleExists = config.hasWolfBeauty;
+  const wolfBeautyIsDead = wolfBeautyPlayer !== null && !wolfBeautyPlayer.alive;
+
+  const firstNightWolfBeautyReady =
+    !config.hasWolfBeauty ||
+    (draftWolfBeautyOwnerId !== null && wolfBeautyCharmTargetId !== null);
+
+  const wolfBeautyCharmTarget =
+    wolfBeautyCharmTargetId !== null
+      ? players.find((p) => p.id === wolfBeautyCharmTargetId) ?? null
+      : null;
+
   const aliveWhiteWolfKing =
     whiteWolfKingPlayer !== null && whiteWolfKingPlayer.alive;
 
@@ -462,6 +518,12 @@ export default function App() {
 
   const selectableWhiteWolfKingPlayers = players.filter(
     (p) => p.role === '狼人' || p.role === '白狼王'
+  );
+
+  const selectableWolfBeautyPlayers = players.filter(
+    (p) =>
+      (p.role === '狼人' || p.role === '狼美人') &&
+      p.id !== draftWhiteWolfKingOwnerId
   );
 
   const whiteWolfKingExplodeTargets = alivePlayers.filter(
@@ -492,7 +554,7 @@ export default function App() {
     if (!dayApplied) return null;
     if (phase !== 'day-result') return null;
     if (voteApplied) return null;
-  
+
     return getBearInfo(players);
   }, [bearRoleExists, dayApplied, phase, voteApplied, players]);
 
@@ -566,6 +628,14 @@ export default function App() {
     setWhiteWolfKingExploded(false);
     setWhiteWolfKingExplodeTargetId(null);
 
+    setWolfBeautyOwnerId(null);
+    setDraftWolfBeautyOwnerId(null);
+    setWolfBeautyCharmTargetId(null);
+    setLastWolfBeautyCharmTargetId(null);
+
+    setWolfBeautyLoverMessage(null);
+    setWolfBeautyLoverEnglish(null);
+
     setSeerOwnerId(null);
     setDraftSeerOwnerId(null);
     setSeerCheckId(null);
@@ -622,6 +692,14 @@ export default function App() {
     setWhiteWolfKingExploded(false);
     setWhiteWolfKingExplodeTargetId(null);
 
+    setWolfBeautyOwnerId(null);
+    setDraftWolfBeautyOwnerId(null);
+    setWolfBeautyCharmTargetId(null);
+    setLastWolfBeautyCharmTargetId(null);
+
+    setWolfBeautyLoverMessage(null);
+    setWolfBeautyLoverEnglish(null);
+
     setSeerOwnerId(null);
     setDraftSeerOwnerId(null);
     setSeerCheckId(null);
@@ -669,6 +747,9 @@ export default function App() {
 
     setWolfTargetId(null);
     setWhiteWolfKingExplodeTargetId(null);
+    setWolfBeautyCharmTargetId(null);
+    setWolfBeautyLoverMessage(null);
+    setWolfBeautyLoverEnglish(null);
     setSeerCheckId(null);
     setWitchSave(false);
     setWitchPoisonId(null);
@@ -683,6 +764,58 @@ export default function App() {
 
   }
 
+  function confirmWolfBeautyCharmAndNext() {
+    if (
+      !wolfBeautyIsDead &&
+      wolfBeautyOwnerId !== null &&
+      wolfBeautyCharmTargetId !== null
+    ) {
+      setLastWolfBeautyCharmTargetId(wolfBeautyCharmTargetId);
+    }
+
+    setPhase(getNextNightPhaseAfterWolfBeauty(config));
+  }
+
+  function applyWolfBeautyLoverDeath(
+    basePlayers: Player[],
+    source: WolfBeautyDeathSource
+  ): Player[] {
+    if (!shouldTriggerWolfBeautyLoverDeath(source)) {
+      return basePlayers;
+    }
+
+    const wolfBeauty = basePlayers.find((p) => p.role === '狼美人') ?? null;
+
+    if (!wolfBeauty) {
+      return basePlayers;
+    }
+
+    // 狼美人必须已经死亡，殉情才会发生
+    if (wolfBeauty.alive) {
+      return basePlayers;
+    }
+
+    const charmedPlayer = getWolfBeautyCharmedPlayer(
+      basePlayers,
+      lastWolfBeautyCharmTargetId
+    );
+
+    if (!charmedPlayer || !charmedPlayer.alive) {
+      return basePlayers;
+    }
+
+    setWolfBeautyLoverMessage(
+      `狼美人殉情：${charmedPlayer.seat}号随狼美人一同出局`
+    );
+    setWolfBeautyLoverEnglish(
+      `Wolf Beauty lover death: Seat ${charmedPlayer.seat} dies with the Wolf Beauty`
+    );
+
+    return basePlayers.map((player) =>
+      player.id === charmedPlayer.id ? { ...player, alive: false } : player
+    );
+  }
+
   function applyDayResult() {
     if (dayApplied || gameOver) return;
 
@@ -692,7 +825,7 @@ export default function App() {
     const hunterPoisonedAtNight =
       hunterPlayer !== null && finalWitchPoisonId === hunterPlayer.id;
 
-    const nextPlayers =
+    const baseNextPlayers =
       dayResult.deadIds.length > 0
         ? players.map((player) =>
           dayResult.deadIds.includes(player.id)
@@ -700,6 +833,15 @@ export default function App() {
             : player
         )
         : players;
+
+    const wolfBeautyDiedByPoison =
+      wolfBeautyPlayer !== null &&
+      finalWitchPoisonId === wolfBeautyPlayer.id &&
+      dayResult.deadIds.includes(wolfBeautyPlayer.id);
+
+    const nextPlayers = wolfBeautyDiedByPoison
+      ? applyWolfBeautyLoverDeath(baseNextPlayers, 'witch-poison')
+      : baseNextPlayers;
 
     setPlayers(nextPlayers);
 
@@ -808,7 +950,7 @@ export default function App() {
     const hunterDiesByVote =
       hunterPlayer !== null && latestSummary.eliminatedId === hunterPlayer.id;
 
-    const nextPlayers =
+    const baseNextPlayers =
       latestSummary.eliminatedId !== null
         ? players.map((player) =>
           player.id === latestSummary.eliminatedId
@@ -816,6 +958,14 @@ export default function App() {
             : player
         )
         : players;
+
+    const wolfBeautyDiedByVote =
+      wolfBeautyPlayer !== null &&
+      latestSummary.eliminatedId === wolfBeautyPlayer.id;
+
+    const nextPlayers = wolfBeautyDiedByVote
+      ? applyWolfBeautyLoverDeath(baseNextPlayers, 'vote')
+      : baseNextPlayers;
 
     setAppliedVoteSummary(latestSummary);
     setPlayers(nextPlayers);
@@ -878,6 +1028,40 @@ export default function App() {
 
     setPlayers(nextPlayers);
     setWhiteWolfKingOwnerId(draftWhiteWolfKingOwnerId);
+    setPhase(nextPhase);
+  }
+
+  function commitWolfBeautyAndNext() {
+    if (draftWolfBeautyOwnerId === null) return;
+
+    const nextPhase = getNextFirstNightPhase(config, 'first-night-wolf-beauty');
+
+    const nextPlayers: Player[] = players.map((p): Player => {
+      if (!selectedWolfIds.includes(p.id)) return p;
+
+      if (p.id === draftWolfBeautyOwnerId) {
+        return { ...p, role: '狼美人' };
+      }
+
+      if (p.id === draftWhiteWolfKingOwnerId) {
+        return { ...p, role: '白狼王' };
+      }
+
+      return { ...p, role: '狼人' };
+    });
+
+    if (nextPhase === 'day-result') {
+      setPlayers(finalizeUnassignedVillagers(nextPlayers));
+      setWolfBeautyOwnerId(draftWolfBeautyOwnerId);
+      setLastWolfBeautyCharmTargetId(wolfBeautyCharmTargetId);
+      setFirstNightDone(true);
+      setPhase('day-result');
+      return;
+    }
+
+    setPlayers(nextPlayers);
+    setWolfBeautyOwnerId(draftWolfBeautyOwnerId);
+    setLastWolfBeautyCharmTargetId(wolfBeautyCharmTargetId);
     setPhase(nextPhase);
   }
 
@@ -992,9 +1176,9 @@ export default function App() {
 
   function commitIdiotAndNext() {
     if (draftIdiotOwnerId === null) return;
-  
+
     const nextPhase = getNextFirstNightPhase(config, 'first-night-idiot');
-  
+
     const nextPlayers: Player[] = players.map((p): Player => {
       if (p.role === '白痴' && p.id !== draftIdiotOwnerId) {
         return { ...p, role: null };
@@ -1004,7 +1188,7 @@ export default function App() {
       }
       return p;
     });
-  
+
     if (nextPhase === 'day-result') {
       setPlayers(finalizeUnassignedVillagers(nextPlayers));
       setIdiotOwnerId(draftIdiotOwnerId);
@@ -1012,7 +1196,7 @@ export default function App() {
       setPhase('day-result');
       return;
     }
-  
+
     setPlayers(nextPlayers);
     setIdiotOwnerId(draftIdiotOwnerId);
     setPhase(nextPhase);
@@ -1066,9 +1250,17 @@ export default function App() {
   function confirmHunterShot() {
     if (hunterShotTargetId === null || gameOver) return;
 
-    const nextPlayers = players.map((player) =>
+    const baseNextPlayers = players.map((player) =>
       player.id === hunterShotTargetId ? { ...player, alive: false } : player
     );
+
+    const wolfBeautyDiedByHunterShot =
+      wolfBeautyPlayer !== null &&
+      hunterShotTargetId === wolfBeautyPlayer.id;
+
+    const nextPlayers = wolfBeautyDiedByHunterShot
+      ? applyWolfBeautyLoverDeath(baseNextPlayers, 'hunter-shot')
+      : baseNextPlayers;
 
     setPlayers(nextPlayers);
 
@@ -1090,6 +1282,7 @@ export default function App() {
       return;
     }
 
+    // 白狼王自爆属于强制带人，狼美人若被带走，不触发殉情技能。
     const nextPlayers = players.map((player) => {
       if (
         player.id === whiteWolfKingPlayer.id ||
@@ -1238,6 +1431,23 @@ export default function App() {
           />
         )}
 
+        {phase === 'first-night-wolf-beauty' && wolfBeautyRoleExists && (
+          <FirstNightWolfBeautyScreen
+            players={players}
+            selectablePlayers={selectableWolfBeautyPlayers}
+            alivePlayers={alivePlayers}
+            draftWolfBeautyOwnerId={draftWolfBeautyOwnerId}
+            wolfBeautyCharmTargetId={wolfBeautyCharmTargetId}
+            canGoNext={firstNightWolfBeautyReady}
+            onSelectWolfBeauty={setDraftWolfBeautyOwnerId}
+            onSelectCharmTarget={setWolfBeautyCharmTargetId}
+            onBack={() =>
+              setPhase(getPrevFirstNightPhase(config, 'first-night-wolf-beauty'))
+            }
+            onNext={commitWolfBeautyAndNext}
+          />
+        )}
+
         {phase === 'first-night-seer' && seerRoleExists && (
           <FirstNightSeerScreen
             players={players}
@@ -1344,6 +1554,19 @@ export default function App() {
           />
         )}
 
+        {phase === 'night-wolf-beauty' && wolfBeautyRoleExists && (
+          <NightWolfBeautyScreen
+            alivePlayers={alivePlayers}
+            wolfBeautyPlayer={wolfBeautyPlayer}
+            wolfBeautyCharmTargetId={wolfBeautyCharmTargetId}
+            lastWolfBeautyCharmTargetId={lastWolfBeautyCharmTargetId}
+            wolfBeautyIsDead={wolfBeautyIsDead}
+            onSelectCharmTarget={setWolfBeautyCharmTargetId}
+            onBack={() => setPhase(getPrevNightPhase(config, 'night-wolf-beauty'))}
+            onNext={confirmWolfBeautyCharmAndNext}
+          />
+        )}
+
         {phase === 'night-seer' && seerRoleExists && (
           <NightSeerScreen
             alivePlayers={alivePlayers}
@@ -1400,6 +1623,8 @@ export default function App() {
             onStartNextNight={startNextNight}
             onReset={resetCurrentGame}
             bearInfo={bearInfo}
+            wolfBeautyLoverMessage={wolfBeautyLoverMessage}
+            wolfBeautyLoverEnglish={wolfBeautyLoverEnglish}
             whiteWolfKingOwnerId={whiteWolfKingOwnerId}
             canWhiteWolfKingExplode={canWhiteWolfKingExplode}
             onStartWhiteWolfKingExplode={startWhiteWolfKingExplode}
@@ -1497,6 +1722,10 @@ function getPhaseLabel(phase: Phase) {
       return '第一夜：白狼王';
     case 'white-wolf-king-explode':
       return '白狼王自爆';
+    case 'first-night-wolf-beauty':
+      return '第一夜：狼美人';
+    case 'night-wolf-beauty':
+      return '夜晚：狼美人魅惑';
     default:
       return phase;
   }
@@ -1538,6 +1767,10 @@ function getPhaseEnglish(phase: Phase) {
       return 'Current phase: First night - White Wolf King';
     case 'white-wolf-king-explode':
       return 'Current phase: White Wolf King explodes';
+    case 'first-night-wolf-beauty':
+      return 'Current phase: First night - Wolf Beauty';
+    case 'night-wolf-beauty':
+      return 'Current phase: Night - Wolf Beauty charms';
     default:
       return phase;
   }

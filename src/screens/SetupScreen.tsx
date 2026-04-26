@@ -97,6 +97,17 @@ export default function SetupScreen({
           <label style={styles.checkboxCard}>
             <input
               type="checkbox"
+              checked={config.hasBear}
+              onChange={(e) =>
+                onUpdateConfig({ hasBear: e.target.checked })
+              }
+            />
+            <Bilingual zh="熊" en="Bear" small />
+          </label>
+
+          <label style={styles.checkboxCard}>
+            <input
+              type="checkbox"
               checked={config.hasIdiot}
               onChange={(e) => onUpdateConfig({ hasIdiot: e.target.checked })}
             />
@@ -113,17 +124,16 @@ export default function SetupScreen({
             />
             <Bilingual zh="白狼王" en="White Wolf King" small />
           </label>
-
           <label style={styles.checkboxCard}>
             <input
               type="checkbox"
-              checked={config.hasBear}
-              onChange={(e) =>
-                onUpdateConfig({ hasBear: e.target.checked })
-              }
+              checked={config.hasWolfBeauty}
+              onChange={(e) => onUpdateConfig({ hasWolfBeauty: e.target.checked })}
             />
-            <Bilingual zh="熊" en="Bear" small />
+            <Bilingual zh="狼美人" en="Wolf Beauty" small />
           </label>
+
+
         </div>
       </div>
 
@@ -137,7 +147,7 @@ export default function SetupScreen({
               <br />
               公式：总人数 = 狼人 + 神职 + 村民
               <br />
-              白狼王属于狼人阵营，占用一个狼位，不额外增加总人数。
+              白狼王和狼美人属于狼人阵营，占用一个狼位，不额外增加总人数。
             </>
           }
           en={
@@ -148,7 +158,7 @@ export default function SetupScreen({
               <br />
               Formula: total = wolves + special roles + villagers
               <br />
-              The White Wolf King belongs to the wolf camp, occupies one wolf
+              The White Wolf King and The Wolf Beauty belong to the wolf camp, occupies one wolf
               slot, and does not increase the total player count.
             </>
           }
@@ -170,6 +180,10 @@ export default function SetupScreen({
           {config.villagerCount}
         </div>
         <div>
+          <strong>熊：</strong>
+          {config.hasBear ? '开启' : '关闭'}
+        </div>
+        <div>
           <strong>白痴：</strong>
           {config.hasIdiot ? '开启' : '关闭'}
         </div>
@@ -178,9 +192,10 @@ export default function SetupScreen({
           {config.hasWhiteWolfKing ? '开启' : '关闭'}
         </div>
         <div>
-          <strong>熊：</strong>
-          {config.hasBear ? '开启' : '关闭'}
+          <strong>狼美人：</strong>
+          {config.hasWolfBeauty ? '开启' : '关闭'}
         </div>
+
         <div>
           <strong>总人数：</strong>
           {playerCount}
@@ -215,6 +230,7 @@ export default function SetupScreen({
             name: `玩家${templateId}`,
             role: null,
             alive: true,
+            idiotRevealed: false,
           };
 
           return (
