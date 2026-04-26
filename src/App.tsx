@@ -501,11 +501,6 @@ export default function App() {
     !config.hasWolfBeauty ||
     (draftWolfBeautyOwnerId !== null && wolfBeautyCharmTargetId !== null);
 
-  const wolfBeautyCharmTarget =
-    wolfBeautyCharmTargetId !== null
-      ? players.find((p) => p.id === wolfBeautyCharmTargetId) ?? null
-      : null;
-
   const aliveWhiteWolfKing =
     whiteWolfKingPlayer !== null && whiteWolfKingPlayer.alive;
 
