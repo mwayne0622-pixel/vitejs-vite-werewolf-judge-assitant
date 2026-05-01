@@ -29,6 +29,7 @@ type Props = {
 
   voteSummary: VoteSummary;
   voteApplied: boolean;
+  unvotedPlayers?: Player[];
 
   dayApplied: boolean;
   gameOver: boolean;
@@ -41,6 +42,12 @@ type Props = {
 
   wolfBeautyLoverMessage: string | null;
   wolfBeautyLoverEnglish: string | null;
+
+  hunterShotMessage: string | null;
+  hunterShotEnglish: string | null;
+
+  whiteWolfKingMessage: string | null;
+  whiteWolfKingEnglish: string | null;
 
   onStartWhiteWolfKingExplode: () => void;
 
@@ -95,6 +102,8 @@ export default function DayResultScreen({
 
   voteSummary,
   voteApplied,
+  unvotedPlayers = [],
+
   dayApplied,
   gameOver,
   gameResult,
@@ -106,6 +115,12 @@ export default function DayResultScreen({
 
   wolfBeautyLoverMessage,
   wolfBeautyLoverEnglish,
+
+  hunterShotMessage,
+  hunterShotEnglish,
+
+  whiteWolfKingMessage,
+  whiteWolfKingEnglish,
 
   onBack,
   onApplyDayResult,
@@ -123,7 +138,6 @@ export default function DayResultScreen({
     <section style={styles.card}>
       <Bilingual zh="天亮结果" en="Day result" />
 
-      {/* 法官宣读信息 */}
       <div style={{ marginTop: 12 }}>
         <Bilingual zh="法官宣读信息" en="Judge announcements" small />
       </div>
@@ -141,6 +155,24 @@ export default function DayResultScreen({
             <div style={styles.announcementBox}>
               <Bilingual zh={dayResult.message} en={dayResult.english} />
             </div>
+            {hunterShotMessage && hunterShotEnglish && (
+              <div style={styles.warningBox}>
+                <Bilingual
+                  zh={hunterShotMessage}
+                  en={hunterShotEnglish}
+                  small
+                />
+              </div>
+            )}
+            {whiteWolfKingMessage && whiteWolfKingEnglish && (
+              <div style={styles.warningBox}>
+                <Bilingual
+                  zh={whiteWolfKingMessage}
+                  en={whiteWolfKingEnglish}
+                  small
+                />
+              </div>
+            )}
 
             {bearInfo && (
               <div style={styles.announcementBox}>
@@ -194,7 +226,6 @@ export default function DayResultScreen({
         )}
       </div>
 
-      {/* 投票结果 */}
       <div style={{ marginTop: 20 }}>
         <Bilingual zh="投票结果" en="Voting result" small />
       </div>
@@ -205,19 +236,27 @@ export default function DayResultScreen({
           {voteSummary.message}
         </div>
 
-        {Object.entries(voteSummary.tally).map(([id, count]) => {
-          const player = players.find((p) => p.id === Number(id));
-          if (!player) return null;
+        {unvotedPlayers.length > 0 && (
+          <div style={styles.unvotedBox}>
+            <strong>未投票：</strong>
+            {unvotedPlayers.map((player) => `${player.seat}号`).join('、')}
+          </div>
+        )}
 
-          return (
-            <div key={id}>
-              {player.seat}号：{count} 票
-            </div>
-          );
-        })}
+        <div style={styles.voteChipList}>
+          {Object.entries(voteSummary.tally).map(([id, count]) => {
+            const player = players.find((p) => p.id === Number(id));
+            if (!player) return null;
+
+            return (
+              <div key={id} style={styles.voteChip}>
+                <strong>{player.seat}号</strong>
+                <span>{count}票</span>
+              </div>
+            );
+          })}
+        </div>
       </div>
-
-      {/* 按钮区 */}
 
       <div style={styles.actionRow}>
         <button
@@ -246,7 +285,7 @@ export default function DayResultScreen({
 
         <button
           style={{
-            ...styles.primaryButton,
+            ...styles.voteButton,
             opacity: canGoToVote ? 1 : 0.5,
             cursor: canGoToVote ? 'pointer' : 'not-allowed',
           }}
@@ -258,7 +297,7 @@ export default function DayResultScreen({
 
         <button
           style={{
-            ...styles.primaryButton,
+            ...styles.nextNightButton,
             opacity: canStartNextNight ? 1 : 0.5,
             cursor: canStartNextNight ? 'pointer' : 'not-allowed',
           }}
@@ -273,7 +312,6 @@ export default function DayResultScreen({
         </button>
       </div>
 
-      {/* 玩家状态 */}
       <div style={{ marginTop: 20 }}>
         <Bilingual zh="玩家状态" en="Player status" small />
 
@@ -286,22 +324,40 @@ export default function DayResultScreen({
               <div key={player.id} style={styles.playerRow}>
                 <div style={styles.seatTag}>{player.seat}号</div>
 
-                <div style={{ minWidth: 120 }}>
+                <div style={styles.nameCell}>
                   <Bilingual zh={player.name} en={player.name} small />
                 </div>
 
                 <div
                   style={{
-                    minWidth: 120,
+                    ...styles.roleCell,
                     color: isRevealedIdiot ? '#dc2626' : '#111827',
                     fontWeight: isRevealedIdiot ? 700 : 500,
                   }}
                 >
-                  <Bilingual
-                    zh={roleLabel(player)}
-                    en={roleToEnglish(player)}
-                    small
-                  />
+                  <div style={styles.roleLine}>
+                    <Bilingual
+                      zh={roleLabel(player)}
+                      en={roleToEnglish(player)}
+                      small
+                    />
+
+                    {canWhiteWolfKingExplode &&
+                      player.id === whiteWolfKingOwnerId &&
+                      player.alive && (
+                        <button
+                          style={{
+                            ...styles.explodeButton,
+                            opacity: gameOver ? 0.5 : 1,
+                            cursor: gameOver ? 'not-allowed' : 'pointer',
+                          }}
+                          disabled={gameOver}
+                          onClick={onStartWhiteWolfKingExplode}
+                        >
+                          <Bilingual zh="自爆" en="Explode" small />
+                        </button>
+                      )}
+                  </div>
                 </div>
 
                 <div
@@ -317,22 +373,6 @@ export default function DayResultScreen({
                     small
                   />
                 </div>
-
-                {canWhiteWolfKingExplode &&
-                  player.id === whiteWolfKingOwnerId &&
-                  player.alive && (
-                    <button
-                      style={{
-                        ...styles.explodeButton,
-                        opacity: gameOver ? 0.5 : 1,
-                        cursor: gameOver ? 'not-allowed' : 'pointer',
-                      }}
-                      disabled={gameOver}
-                      onClick={onStartWhiteWolfKingExplode}
-                    >
-                      <Bilingual zh="自爆" en="Explode" small />
-                    </button>
-                  )}
               </div>
             );
           })}
@@ -377,7 +417,36 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 16,
     background: '#f9fafb',
     display: 'grid',
+    gap: 10,
+    textAlign: 'left',
+  },
+
+  unvotedBox: {
+    padding: '8px 10px',
+    borderRadius: 12,
+    background: '#fff7ed',
+    color: '#9a3412',
+    fontSize: 13,
+    border: '1px solid #fdba74',
+  },
+
+  voteChipList: {
+    display: 'flex',
+    flexWrap: 'wrap',
     gap: 8,
+    marginTop: 4,
+  },
+
+  voteChip: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '6px 10px',
+    borderRadius: 999,
+    background: '#eef2ff',
+    color: '#3730a3',
+    fontSize: 13,
+    whiteSpace: 'nowrap',
   },
 
   actionRow: {
@@ -390,6 +459,26 @@ const styles: Record<string, CSSProperties> = {
   primaryButton: {
     border: 'none',
     background: '#111827',
+    color: '#fff',
+    padding: '12px 16px',
+    borderRadius: 14,
+    cursor: 'pointer',
+    fontWeight: 700,
+  },
+
+  voteButton: {
+    border: 'none',
+    background: '#2563eb',
+    color: '#fff',
+    padding: '12px 16px',
+    borderRadius: 14,
+    cursor: 'pointer',
+    fontWeight: 700,
+  },
+
+  nextNightButton: {
+    border: 'none',
+    background: '#16a34a',
     color: '#fff',
     padding: '12px 16px',
     borderRadius: 14,
@@ -424,7 +513,8 @@ const styles: Record<string, CSSProperties> = {
   },
 
   playerRow: {
-    display: 'flex',
+    display: 'grid',
+    gridTemplateColumns: '50px minmax(70px, 1fr) minmax(120px, 1.2fr) auto',
     alignItems: 'center',
     gap: 10,
     padding: 10,
@@ -439,24 +529,47 @@ const styles: Record<string, CSSProperties> = {
     color: '#fff',
     borderRadius: 10,
     padding: 6,
+    boxSizing: 'border-box',
+    whiteSpace: 'nowrap',
+  },
+
+  nameCell: {
+    minWidth: 0,
+  },
+
+  roleCell: {
+    minWidth: 0,
+  },
+
+  roleLine: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
   },
 
   aliveBadge: {
     padding: '6px 10px',
     borderRadius: 999,
     fontSize: 12,
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
+    textAlign: 'center',
   },
 
   explodeButton: {
     border: 'none',
     background: '#b91c1c',
     color: '#fff',
-    padding: '8px 12px',
-    borderRadius: 10,
+    padding: '4px 8px',
+    borderRadius: 8,
     cursor: 'pointer',
     fontWeight: 700,
-    marginLeft: 'auto',
+    fontSize: 12,
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
   },
+
   warningBox: {
     marginTop: 16,
     padding: 14,

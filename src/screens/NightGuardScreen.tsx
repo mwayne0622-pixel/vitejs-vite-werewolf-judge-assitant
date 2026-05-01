@@ -12,6 +12,33 @@ type Props = {
   onNext: () => void;
 };
 
+function roleToEnglish(role: Player['role']) {
+  switch (role) {
+    case '狼人':
+      return 'Wolf';
+    case '白狼王':
+      return 'White Wolf King';
+    case '狼美人':
+      return 'Wolf Beauty';
+    case '预言家':
+      return 'Seer';
+    case '女巫':
+      return 'Witch';
+    case '守卫':
+      return 'Guard';
+    case '猎人':
+      return 'Hunter';
+    case '白痴':
+      return 'Idiot';
+    case '熊':
+      return 'Bear';
+    case '村民':
+      return 'Villager';
+    default:
+      return 'Unknown';
+  }
+}
+
 export default function NightGuardScreen({
   alivePlayers,
   guardTargetId,
@@ -70,12 +97,13 @@ export default function NightGuardScreen({
 
       <div style={styles.optionList}>
         {alivePlayers.map((player) => {
-          const blockedByLastNight = lastGuardTargetId === player.id;
-          const disabled = guardIsDead || blockedByLastNight;
+          const disabled =
+            guardIsDead || player.id === lastGuardTargetId;
 
           return (
             <button
               key={player.id}
+              type="button"
               disabled={disabled}
               style={{
                 ...styles.optionButton,
@@ -89,11 +117,11 @@ export default function NightGuardScreen({
               }}
             >
               <Bilingual
-                zh={`${player.seat}号${
-                  blockedByLastNight ? '（上夜已守）' : ''
+                zh={`${player.seat}号 - ${player.role ?? '未确认'}${
+                  player.id === lastGuardTargetId ? '（上夜已守）' : ''
                 }`}
-                en={`Seat ${player.seat}${
-                  blockedByLastNight ? ' (protected last night)' : ''
+                en={`Seat ${player.seat} - ${roleToEnglish(player.role)}${
+                  player.id === lastGuardTargetId ? ' (protected last night)' : ''
                 }`}
                 small
               />
@@ -103,11 +131,11 @@ export default function NightGuardScreen({
       </div>
 
       <div style={styles.actionRow}>
-        <button style={styles.secondaryButton} onClick={onBack}>
+        <button type="button" style={styles.secondaryButton} onClick={onBack}>
           <Bilingual zh="上一步" en="Back" small />
         </button>
 
-        <button style={styles.primaryButton} onClick={onNext}>
+        <button type="button" style={styles.primaryButton} onClick={onNext}>
           <Bilingual zh="天亮结算" en="Go to day result" small />
         </button>
       </div>
@@ -171,6 +199,8 @@ const styles: Record<string, CSSProperties> = {
     cursor: 'pointer',
     fontSize: 14,
     background: '#ffffff',
+    minWidth: 120,
+    textAlign: 'left',
   },
   actionRow: {
     display: 'flex',

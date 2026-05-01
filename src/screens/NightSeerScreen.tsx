@@ -13,6 +13,33 @@ type Props = {
   onNext: () => void;
 };
 
+function roleToEnglish(role: Player['role']) {
+  switch (role) {
+    case '狼人':
+      return 'Wolf';
+    case '白狼王':
+      return 'White Wolf King';
+    case '狼美人':
+      return 'Wolf Beauty';
+    case '预言家':
+      return 'Seer';
+    case '女巫':
+      return 'Witch';
+    case '守卫':
+      return 'Guard';
+    case '猎人':
+      return 'Hunter';
+    case '白痴':
+      return 'Idiot';
+    case '熊':
+      return 'Bear';
+    case '村民':
+      return 'Villager';
+    default:
+      return 'Unknown';
+  }
+}
+
 export default function NightSeerScreen({
   alivePlayers,
   seerCheckId,
@@ -71,6 +98,7 @@ export default function NightSeerScreen({
         {alivePlayers.map((player) => (
           <button
             key={player.id}
+            type="button"
             disabled={seerIsDead}
             style={{
               ...styles.optionButton,
@@ -84,8 +112,8 @@ export default function NightSeerScreen({
             }}
           >
             <Bilingual
-              zh={`${player.seat}号`}
-              en={`Seat ${player.seat}`}
+              zh={`${player.seat}号 - ${player.role ?? '未确认'}`}
+              en={`Seat ${player.seat} - ${roleToEnglish(player.role)}`}
               small
             />
           </button>
@@ -121,11 +149,11 @@ export default function NightSeerScreen({
       )}
 
       <div style={styles.actionRow}>
-        <button style={styles.secondaryButton} onClick={onBack}>
+        <button type="button" style={styles.secondaryButton} onClick={onBack}>
           <Bilingual zh="上一步" en="Back" small />
         </button>
 
-        <button style={styles.primaryButton} onClick={onNext}>
+        <button type="button" style={styles.primaryButton} onClick={onNext}>
           <Bilingual zh="下一步" en="Next" small />
         </button>
       </div>
@@ -181,6 +209,8 @@ const styles: Record<string, CSSProperties> = {
     cursor: 'pointer',
     fontSize: 14,
     background: '#ffffff',
+    minWidth: 120,
+    textAlign: 'left',
   },
   resultBox: {
     marginTop: 16,

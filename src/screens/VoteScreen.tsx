@@ -37,6 +37,8 @@ export default function VoteScreen({
   onBack,
   onApplyVoteResult,
 }: Props) {
+  const unvotedPlayers = voters.filter((voter) => votes[voter.id] == null);
+
   return (
     <section style={styles.card}>
       <Bilingual zh="白天投票" en="Day voting" />
@@ -78,8 +80,10 @@ export default function VoteScreen({
                   key={target.id}
                   style={{
                     ...styles.optionButton,
-                    background: votes[voter.id] === target.id ? '#111827' : '#ffffff',
-                    color: votes[voter.id] === target.id ? '#ffffff' : '#111827',
+                    background:
+                      votes[voter.id] === target.id ? '#111827' : '#ffffff',
+                    color:
+                      votes[voter.id] === target.id ? '#ffffff' : '#111827',
                   }}
                   onClick={() => onSetPlayerVote(voter.id, target.id)}
                 >
@@ -101,14 +105,25 @@ export default function VoteScreen({
           {voteSummary.message}
         </div>
 
-        {voteTargets.map((target) => {
-          const count = voteSummary.tally[target.id] || 0;
-          return (
-            <div key={target.id}>
-              {target.seat}号：{count} 票
-            </div>
-          );
-        })}
+        {unvotedPlayers.length > 0 && (
+          <div style={styles.unvotedBox}>
+            <strong>未投票：</strong>
+            {unvotedPlayers.map((player) => `${player.seat}号`).join('、')}
+          </div>
+        )}
+
+        <div style={styles.voteChipList}>
+          {voteTargets.map((target) => {
+            const count = voteSummary.tally[target.id] || 0;
+
+            return (
+              <div key={target.id} style={styles.voteChip}>
+                <strong>{target.seat}号</strong>
+                <span>{count}票</span>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div style={styles.actionRow}>
@@ -118,7 +133,7 @@ export default function VoteScreen({
 
         <button
           style={{
-            ...styles.primaryButton,
+            ...styles.successButton,
             opacity: voteApplied || !allCurrentVotersVoted ? 0.5 : 1,
             cursor:
               voteApplied || !allCurrentVotersVoted ? 'not-allowed' : 'pointer',
@@ -141,6 +156,7 @@ const styles: Record<string, CSSProperties> = {
     boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
     marginBottom: 20,
   },
+
   tipBox: {
     marginTop: 16,
     padding: 14,
@@ -149,20 +165,52 @@ const styles: Record<string, CSSProperties> = {
     color: '#374151',
     border: '1px solid #e5e7eb',
   },
+
   summaryBox: {
     marginTop: 16,
     padding: 16,
     borderRadius: 16,
     background: '#f9fafb',
     display: 'grid',
-    gap: 8,
+    gap: 10,
+    textAlign: 'left',
   },
+
+  unvotedBox: {
+    padding: '8px 10px',
+    borderRadius: 12,
+    background: '#fff7ed',
+    color: '#9a3412',
+    fontSize: 13,
+    border: '1px solid #fdba74',
+  },
+
+  voteChipList: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 4,
+  },
+
+  voteChip: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '6px 10px',
+    borderRadius: 999,
+    background: '#eef2ff',
+    color: '#3730a3',
+    fontSize: 13,
+    whiteSpace: 'nowrap',
+  },
+
   playerList: {
     display: 'flex',
     flexDirection: 'column',
     gap: 12,
     marginTop: 12,
   },
+
   voteRow: {
     display: 'flex',
     flexDirection: 'column',
@@ -171,15 +219,18 @@ const styles: Record<string, CSSProperties> = {
     border: '1px solid #e5e7eb',
     borderRadius: 14,
   },
+
   voteVoter: {
     fontWeight: 700,
     color: '#111827',
   },
+
   optionList: {
     display: 'flex',
     flexWrap: 'wrap',
     gap: 10,
   },
+
   optionButton: {
     border: '1px solid #d1d5db',
     borderRadius: 14,
@@ -188,21 +239,24 @@ const styles: Record<string, CSSProperties> = {
     fontSize: 14,
     background: '#ffffff',
   },
+
   actionRow: {
     display: 'flex',
     flexWrap: 'wrap',
     gap: 12,
     marginTop: 20,
   },
-  primaryButton: {
+
+  successButton: {
     border: 'none',
-    background: '#111827',
+    background: '#16a34a',
     color: '#ffffff',
     padding: '12px 16px',
     borderRadius: 14,
     cursor: 'pointer',
     fontWeight: 700,
   },
+
   secondaryButton: {
     border: '1px solid #d1d5db',
     background: '#ffffff',

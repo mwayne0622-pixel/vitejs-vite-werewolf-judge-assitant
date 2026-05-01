@@ -35,35 +35,28 @@ export default function WhiteWolfKingExplodeScreen({
         <Bilingual zh="可选目标" en="Selectable targets" small />
       </div>
 
-      <div style={styles.playerList}>
+      <div style={styles.playerGrid}>
         {targets.map((player) => {
           const selected = selectedTargetId === player.id;
-          const displayName =
-            player.name?.trim() || `${player.seat}号玩家`;
+          const displayName = player.name?.trim() || `${player.seat}号玩家`;
 
           return (
             <button
               key={player.id}
+              type="button"
               style={{
-                ...styles.playerButton,
+                ...styles.targetButton,
                 background: selected ? '#111827' : '#ffffff',
                 color: selected ? '#ffffff' : '#111827',
                 borderColor: selected ? '#111827' : '#d1d5db',
               }}
               onClick={() => onSelectTarget(player.id)}
             >
-              <div style={styles.playerMainLine}>
-                <strong>{player.seat}号</strong>
-                <span>{displayName}</span>
-              </div>
-
-              <div style={styles.playerSubLine}>
-                <Bilingual
-                  zh={selected ? '已选择' : '点击选择'}
-                  en={selected ? 'Selected' : 'Click to select'}
-                  small
-                />
-              </div>
+              <Bilingual
+                zh={`${player.seat}号 - ${displayName}`}
+                en={`Seat ${player.seat} - ${displayName}`}
+                small
+              />
             </button>
           );
         })}
@@ -84,11 +77,12 @@ export default function WhiteWolfKingExplodeScreen({
       )}
 
       <div style={styles.actionRow}>
-        <button style={styles.secondaryButton} onClick={onBack}>
+        <button type="button" style={styles.secondaryButton} onClick={onBack}>
           <Bilingual zh="返回" en="Back" small />
         </button>
 
         <button
+          type="button"
           style={{
             ...styles.dangerButton,
             opacity: selectedTargetId ? 1 : 0.5,
@@ -120,29 +114,22 @@ const styles: Record<string, CSSProperties> = {
     color: '#991b1b',
     border: '1px solid #fecaca',
   },
-  playerList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 12,
+  playerGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+    gap: 10,
     marginTop: 12,
   },
-  playerButton: {
+  targetButton: {
     border: '1px solid #d1d5db',
-    borderRadius: 16,
-    padding: 14,
+    borderRadius: 14,
+    padding: '12px 14px',
     background: '#ffffff',
-    textAlign: 'left',
     cursor: 'pointer',
-  },
-  playerMainLine: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-    fontSize: 15,
-  },
-  playerSubLine: {
-    marginTop: 8,
-    opacity: 0.9,
+    fontSize: 14,
+    fontWeight: 700,
+    textAlign: 'left',
+    minHeight: 62,
   },
   confirmBox: {
     marginTop: 16,
@@ -154,6 +141,7 @@ const styles: Record<string, CSSProperties> = {
   },
   actionRow: {
     display: 'flex',
+    flexWrap: 'wrap',
     gap: 12,
     marginTop: 20,
   },

@@ -238,6 +238,11 @@ export default function App() {
     null
   );
   const [hunterShotUsed, setHunterShotUsed] = useState(false);
+  const [hunterShotMessage, setHunterShotMessage] = useState<string | null>(null);
+  const [hunterShotEnglish, setHunterShotEnglish] = useState<string | null>(null);
+
+  const [whiteWolfKingMessage, setWhiteWolfKingMessage] = useState<string | null>(null);
+  const [whiteWolfKingEnglish, setWhiteWolfKingEnglish] = useState<string | null>(null);
 
   const [idiotOwnerId, setIdiotOwnerId] = useState<number | null>(null);
   const [draftIdiotOwnerId, setDraftIdiotOwnerId] = useState<number | null>(null);
@@ -318,6 +323,9 @@ export default function App() {
       setHunterShotTargetId(data.hunterShotTargetId ?? null);
       setHunterShotUsed(Boolean(data.hunterShotUsed));
 
+      setHunterShotMessage(data.hunterShotMessage ?? null);
+      setHunterShotEnglish(data.hunterShotEnglish ?? null);
+
       setIdiotOwnerId(data.idiotOwnerId ?? null);
       setDraftIdiotOwnerId(data.draftIdiotOwnerId ?? null);
 
@@ -383,6 +391,9 @@ export default function App() {
         hunterShotTargetId,
         hunterShotUsed,
 
+        hunterShotMessage,
+        hunterShotEnglish,
+
         idiotOwnerId,
         draftIdiotOwnerId,
 
@@ -435,6 +446,8 @@ export default function App() {
     hunterShootSource,
     hunterShotTargetId,
     hunterShotUsed,
+    hunterShotMessage,
+    hunterShotEnglish,
     idiotOwnerId,
     draftIdiotOwnerId,
     bearOwnerId,
@@ -579,6 +592,9 @@ export default function App() {
   const allCurrentVotersVoted = currentVoters.every(
     (player) => votes[player.id] != null
   );
+  const unvotedPlayers = currentVoters.filter(
+    (player) => votes[player.id] == null
+  );
 
   const voteSummary: VoteSummary & { shouldRevote: boolean } = useMemo(() => {
     return calculateVoteSummary({
@@ -622,6 +638,8 @@ export default function App() {
     setDraftWhiteWolfKingOwnerId(null);
     setWhiteWolfKingExploded(false);
     setWhiteWolfKingExplodeTargetId(null);
+    setHunterShotMessage(null);
+    setHunterShotEnglish(null);
 
     setWolfBeautyOwnerId(null);
     setDraftWolfBeautyOwnerId(null);
@@ -670,6 +688,8 @@ export default function App() {
 
     setGameOver(false);
     setGameResult(null);
+    setWhiteWolfKingMessage(null);
+    setWhiteWolfKingEnglish(null);
   }
 
   function resetCurrentGame() {
@@ -686,6 +706,8 @@ export default function App() {
     setDraftWhiteWolfKingOwnerId(null);
     setWhiteWolfKingExploded(false);
     setWhiteWolfKingExplodeTargetId(null);
+    setHunterShotMessage(null);
+    setHunterShotEnglish(null);
 
     setWolfBeautyOwnerId(null);
     setDraftWolfBeautyOwnerId(null);
@@ -733,6 +755,8 @@ export default function App() {
     setHunterShotUsed(false);
     setGameOver(false);
     setGameResult(null);
+    setWhiteWolfKingMessage(null);
+    setWhiteWolfKingEnglish(null);
 
   }
 
@@ -745,6 +769,8 @@ export default function App() {
     setWolfBeautyCharmTargetId(null);
     setWolfBeautyLoverMessage(null);
     setWolfBeautyLoverEnglish(null);
+    setHunterShotMessage(null);
+    setHunterShotEnglish(null);
     setSeerCheckId(null);
     setWitchSave(false);
     setWitchPoisonId(null);
@@ -756,6 +782,8 @@ export default function App() {
     setRevoteCandidateIds([]);
     setAppliedVoteSummary(null);
     setPhase('night-wolf');
+    setWhiteWolfKingMessage(null);
+    setWhiteWolfKingEnglish(null);
 
   }
 
@@ -972,6 +1000,8 @@ export default function App() {
       setPhase('hunter-shoot');
       return;
     }
+
+    setPhase('day-result');
 
     checkGameOver(nextPlayers);
   }
@@ -1236,9 +1266,12 @@ export default function App() {
     if (gameOver) return;
 
     setHunterShotUsed(true);
-    const nextPhase = hunterShootSource === 'night' ? 'day-result' : 'day-vote';
+    const nextPhase = 'day-result';
+
     setHunterShootSource(null);
     setHunterShotTargetId(null);
+    setHunterShotMessage('猎人选择不开枪');
+    setHunterShotEnglish('Hunter chose not to shoot');
     setPhase(nextPhase);
   }
 
@@ -1248,6 +1281,13 @@ export default function App() {
     const baseNextPlayers = players.map((player) =>
       player.id === hunterShotTargetId ? { ...player, alive: false } : player
     );
+
+    const shotTarget = players.find((p) => p.id === hunterShotTargetId) ?? null;
+
+    if (shotTarget) {
+      setHunterShotMessage(`猎人开枪带走：${shotTarget.seat}号`);
+      setHunterShotEnglish(`Hunter shot: Seat ${shotTarget.seat} was taken down`);
+    }
 
     const wolfBeautyDiedByHunterShot =
       wolfBeautyPlayer !== null &&
@@ -1260,7 +1300,7 @@ export default function App() {
     setPlayers(nextPlayers);
 
     setHunterShotUsed(true);
-    const nextPhase = hunterShootSource === 'night' ? 'day-result' : 'day-vote';
+    const nextPhase = 'day-result';
     setHunterShootSource(null);
     setHunterShotTargetId(null);
     setPhase(nextPhase);
@@ -1277,7 +1317,10 @@ export default function App() {
       return;
     }
 
-    // 白狼王自爆属于强制带人，狼美人若被带走，不触发殉情技能。
+    const explodeTarget =
+      players.find((player) => player.id === whiteWolfKingExplodeTargetId) ??
+      null;
+
     const nextPlayers = players.map((player) => {
       if (
         player.id === whiteWolfKingPlayer.id ||
@@ -1288,14 +1331,21 @@ export default function App() {
       return player;
     });
 
+    if (explodeTarget) {
+      setWhiteWolfKingMessage(
+        `白狼王 ${whiteWolfKingPlayer.seat}号 自爆带走 ${explodeTarget.seat}号`
+      );
+      setWhiteWolfKingEnglish(
+        `White Wolf King (Seat ${whiteWolfKingPlayer.seat}) exploded and took Seat ${explodeTarget.seat}`
+      );
+    }
+
     setPlayers(nextPlayers);
     setWhiteWolfKingExploded(true);
     setWhiteWolfKingExplodeTargetId(null);
+    setPhase('day-result');
 
-    const ended = checkGameOver(nextPlayers);
-    if (ended) return;
-
-    startNextNight();
+    checkGameOver(nextPlayers);
   }
 
   function checkGameOver(nextPlayers: Player[]) {
@@ -1611,20 +1661,31 @@ export default function App() {
             dayResult={dayResult}
             voteSummary={displayVoteSummary}
             voteApplied={voteApplied}
+            unvotedPlayers={unvotedPlayers}
+
             dayApplied={dayApplied}
+            gameOver={gameOver}
+            gameResult={gameResult}
+
+            whiteWolfKingOwnerId={whiteWolfKingOwnerId}
+            canWhiteWolfKingExplode={canWhiteWolfKingExplode}
+
+            bearInfo={bearInfo}
+
+            wolfBeautyLoverMessage={wolfBeautyLoverMessage}
+            wolfBeautyLoverEnglish={wolfBeautyLoverEnglish}
+
+            onStartWhiteWolfKingExplode={startWhiteWolfKingExplode}
+
             onBack={() => setPhase(getPrevNightPhase(config, 'day-result'))}
             onApplyDayResult={applyDayResult}
             onGoToVote={() => setPhase('day-vote')}
             onStartNextNight={startNextNight}
             onReset={resetCurrentGame}
-            bearInfo={bearInfo}
-            wolfBeautyLoverMessage={wolfBeautyLoverMessage}
-            wolfBeautyLoverEnglish={wolfBeautyLoverEnglish}
-            whiteWolfKingOwnerId={whiteWolfKingOwnerId}
-            canWhiteWolfKingExplode={canWhiteWolfKingExplode}
-            onStartWhiteWolfKingExplode={startWhiteWolfKingExplode}
-            gameOver={gameOver}
-            gameResult={gameResult}
+            hunterShotMessage={hunterShotMessage}
+            hunterShotEnglish={hunterShotEnglish}
+            whiteWolfKingMessage={whiteWolfKingMessage}
+            whiteWolfKingEnglish={whiteWolfKingEnglish}
           />
         )}
 

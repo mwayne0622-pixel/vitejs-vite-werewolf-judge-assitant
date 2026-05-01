@@ -13,6 +13,33 @@ type Props = {
   onNext: () => void;
 };
 
+function roleToEnglish(role: Player['role']) {
+  switch (role) {
+    case '狼人':
+      return 'Wolf';
+    case '白狼王':
+      return 'White Wolf King';
+    case '狼美人':
+      return 'Wolf Beauty';
+    case '预言家':
+      return 'Seer';
+    case '女巫':
+      return 'Witch';
+    case '守卫':
+      return 'Guard';
+    case '猎人':
+      return 'Hunter';
+    case '白痴':
+      return 'Idiot';
+    case '熊':
+      return 'Bear';
+    case '村民':
+      return 'Villager';
+    default:
+      return 'Unknown';
+  }
+}
+
 export default function NightWolfBeautyScreen({
   alivePlayers,
   wolfBeautyPlayer,
@@ -123,12 +150,8 @@ export default function NightWolfBeautyScreen({
               }}
             >
               <Bilingual
-                zh={`${player.seat}号 - ${
-                  player.name?.trim() || `玩家${player.seat}`
-                }`}
-                en={`Seat ${player.seat} - ${
-                  player.name?.trim() || `Player ${player.seat}`
-                }`}
+                zh={`${player.seat}号 - ${player.role ?? '未确认'}`}
+                en={`Seat ${player.seat} - ${roleToEnglish(player.role)}`}
                 small
               />
             </button>
@@ -239,6 +262,8 @@ const styles: Record<string, CSSProperties> = {
     cursor: 'pointer',
     fontSize: 14,
     background: '#ffffff',
+    minWidth: 120,
+    textAlign: 'left',
   },
   lastBox: {
     marginTop: 16,

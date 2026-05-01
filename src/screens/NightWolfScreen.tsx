@@ -10,6 +10,33 @@ type Props = {
   onNext: () => void;
 };
 
+function roleToEnglish(role: Player['role']) {
+  switch (role) {
+    case '狼人':
+      return 'Wolf';
+    case '白狼王':
+      return 'White Wolf King';
+    case '狼美人':
+      return 'Wolf Beauty';
+    case '预言家':
+      return 'Seer';
+    case '女巫':
+      return 'Witch';
+    case '守卫':
+      return 'Guard';
+    case '猎人':
+      return 'Hunter';
+    case '白痴':
+      return 'Idiot';
+    case '熊':
+      return 'Bear';
+    case '村民':
+      return 'Villager';
+    default:
+      return 'Unknown';
+  }
+}
+
 export default function NightWolfScreen({
   alivePlayers,
   wolfTargetId,
@@ -58,6 +85,7 @@ export default function NightWolfScreen({
         {alivePlayers.map((player) => (
           <button
             key={player.id}
+            type="button"
             style={{
               ...styles.optionButton,
               background: wolfTargetId === player.id ? '#111827' : '#ffffff',
@@ -66,8 +94,8 @@ export default function NightWolfScreen({
             onClick={() => onSelectTarget(player.id)}
           >
             <Bilingual
-              zh={`${player.seat}号`}
-              en={`Seat ${player.seat}`}
+              zh={`${player.seat}号 - ${player.role ?? '未确认'}`}
+              en={`Seat ${player.seat} - ${roleToEnglish(player.role)}`}
               small
             />
           </button>
@@ -76,6 +104,7 @@ export default function NightWolfScreen({
 
       <div style={styles.actionRow}>
         <button
+          type="button"
           style={{
             ...styles.primaryButton,
             opacity: canGoNext ? 1 : 0.5,
@@ -139,6 +168,8 @@ const styles: Record<string, CSSProperties> = {
     cursor: 'pointer',
     fontSize: 14,
     background: '#ffffff',
+    minWidth: 120,
+    textAlign: 'left',
   },
   actionRow: {
     display: 'flex',
