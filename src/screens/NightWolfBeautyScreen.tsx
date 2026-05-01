@@ -38,6 +38,31 @@ export default function NightWolfBeautyScreen({
     <section style={styles.card}>
       <Bilingual zh="夜晚：狼美人魅惑" en="Night: Wolf Beauty charms" />
 
+      <div style={styles.judgePanel}>
+        <div style={styles.judgeHeader}>
+          <Bilingual zh="法官宣读" en="Judge script" small />
+        </div>
+
+        <div style={styles.judgeContent}>
+          <Bilingual
+            zh={
+              <>
+                狼美人请睁眼。
+                <br />
+                请选择今晚你要魅惑的玩家。
+              </>
+            }
+            en={
+              <>
+                Wolf Beauty, please open your eyes.
+                <br />
+                Choose the player you want to charm tonight.
+              </>
+            }
+          />
+        </div>
+      </div>
+
       {wolfBeautyIsDead && (
         <div style={styles.deadNotice}>
           <Bilingual
@@ -150,11 +175,7 @@ export default function NightWolfBeautyScreen({
           <Bilingual zh="上一步" en="Back" small />
         </button>
 
-        <button
-          type="button"
-          style={styles.primaryButton}
-          onClick={onNext}
-        >
+        <button type="button" style={styles.primaryButton} onClick={onNext}>
           <Bilingual zh="下一步" en="Next" small />
         </button>
       </div>
@@ -169,6 +190,25 @@ const styles: Record<string, CSSProperties> = {
     padding: 20,
     boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
     marginBottom: 20,
+  },
+  judgePanel: {
+    marginTop: 14,
+    padding: 16,
+    borderRadius: 16,
+    background: '#f5f3ff',
+    border: '1px solid #ddd6fe',
+  },
+  judgeHeader: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: '#6d28d9',
+    marginBottom: 8,
+  },
+  judgeContent: {
+    fontSize: 16,
+    fontWeight: 600,
+    color: '#111827',
+    lineHeight: 1.7,
   },
   deadNotice: {
     marginTop: 16,

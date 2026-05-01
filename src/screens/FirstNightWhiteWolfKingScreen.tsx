@@ -25,6 +25,31 @@ export default function FirstNightWhiteWolfKingScreen({
     <section style={styles.card}>
       <Bilingual zh="确认白狼王" en="Confirm White Wolf King" />
 
+      <div style={styles.judgePanel}>
+        <div style={styles.judgeHeader}>
+          <Bilingual zh="法官宣读" en="Judge script" small />
+        </div>
+
+        <div style={styles.judgeContent}>
+          <Bilingual
+            zh={
+              <>
+                白狼王请睁眼。
+                <br />
+                请确认你的身份。
+              </>
+            }
+            en={
+              <>
+                White Wolf King, please open your eyes.
+                <br />
+                Confirm your identity.
+              </>
+            }
+          />
+        </div>
+      </div>
+
       <div style={styles.tipBox}>
         <Bilingual
           zh="请从已选中的狼人中，再指定 1 名玩家为白狼王。白狼王属于狼人阵营，占用一个狼位。"
@@ -63,7 +88,11 @@ export default function FirstNightWhiteWolfKingScreen({
               <div style={styles.playerSubLine}>
                 <Bilingual
                   zh={selected ? '已设为白狼王' : '点击设为白狼王'}
-                  en={selected ? 'Selected as White Wolf King' : 'Click to assign'}
+                  en={
+                    selected
+                      ? 'Selected as White Wolf King'
+                      : 'Click to assign'
+                  }
                   small
                 />
               </div>
@@ -115,6 +144,25 @@ const styles: Record<string, CSSProperties> = {
     padding: 20,
     boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
     marginBottom: 20,
+  },
+  judgePanel: {
+    marginTop: 14,
+    padding: 16,
+    borderRadius: 16,
+    background: '#f5f3ff',
+    border: '1px solid #ddd6fe',
+  },
+  judgeHeader: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: '#6d28d9',
+    marginBottom: 8,
+  },
+  judgeContent: {
+    fontSize: 16,
+    fontWeight: 600,
+    color: '#111827',
+    lineHeight: 1.7,
   },
   tipBox: {
     marginTop: 16,

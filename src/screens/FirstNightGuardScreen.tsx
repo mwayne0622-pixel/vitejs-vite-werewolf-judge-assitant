@@ -36,6 +36,35 @@ export default function FirstNightGuardScreen({
     <section style={styles.card}>
       <Bilingual zh="5. 第一夜：守卫" en="First night: Guard" />
 
+      <div style={styles.judgePanel}>
+        <div style={styles.judgeHeader}>
+          <Bilingual zh="法官宣读" en="Judge script" small />
+        </div>
+
+        <div style={styles.judgeContent}>
+          <Bilingual
+            zh={
+              <>
+                守卫请睁眼。
+                <br />
+                请确认你的身份。
+                <br />
+                请选择今晚你要守护的玩家。
+              </>
+            }
+            en={
+              <>
+                Guard, please open your eyes.
+                <br />
+                Confirm your identity.
+                <br />
+                Choose the player you want to guard tonight.
+              </>
+            }
+          />
+        </div>
+      </div>
+
       <div style={{ marginTop: 16 }}>
         <Bilingual
           zh="先选中谁是守卫，点击下一步后才保存"
@@ -127,6 +156,25 @@ const styles: Record<string, CSSProperties> = {
     padding: 20,
     boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
     marginBottom: 20,
+  },
+  judgePanel: {
+    marginTop: 14,
+    padding: 16,
+    borderRadius: 16,
+    background: '#f5f3ff',
+    border: '1px solid #ddd6fe',
+  },
+  judgeHeader: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: '#6d28d9',
+    marginBottom: 8,
+  },
+  judgeContent: {
+    fontSize: 16,
+    fontWeight: 600,
+    color: '#111827',
+    lineHeight: 1.7,
   },
   optionList: {
     display: 'flex',

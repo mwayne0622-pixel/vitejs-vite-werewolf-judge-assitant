@@ -31,6 +31,31 @@ export default function FirstNightWolfScreen({
     <section style={styles.card}>
       <Bilingual zh="2. 第一夜：狼人" en="First night: Wolves" />
 
+      <div style={styles.judgePanel}>
+        <div style={styles.judgeHeader}>
+          <Bilingual zh="法官宣读" en="Judge script" small />
+        </div>
+
+        <div style={styles.judgeContent}>
+          <Bilingual
+            zh={
+              <>
+                狼人请睁眼。
+                <br />
+                请确认彼此身份，并选择今晚要袭击的玩家。
+              </>
+            }
+            en={
+              <>
+                Wolves, please open your eyes.
+                <br />
+                Confirm each other, then choose tonight&apos;s target.
+              </>
+            }
+          />
+        </div>
+      </div>
+
       <div style={styles.tipBox}>
         <Bilingual
           zh="先标记哪些玩家是狼人，再记录今晚刀口。狼人可以自刀。"
@@ -135,6 +160,25 @@ const styles: Record<string, CSSProperties> = {
     padding: 20,
     boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
     marginBottom: 20,
+  },
+  judgePanel: {
+    marginTop: 14,
+    padding: 16,
+    borderRadius: 16,
+    background: '#f5f3ff',
+    border: '1px solid #ddd6fe',
+  },
+  judgeHeader: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: '#6d28d9',
+    marginBottom: 8,
+  },
+  judgeContent: {
+    fontSize: 16,
+    fontWeight: 600,
+    color: '#111827',
+    lineHeight: 1.7,
   },
   tipBox: {
     marginTop: 16,

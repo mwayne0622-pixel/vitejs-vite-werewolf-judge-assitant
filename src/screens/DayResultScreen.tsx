@@ -399,10 +399,12 @@ const styles: Record<string, CSSProperties> = {
 
   secondaryButton: {
     border: '1px solid #d1d5db',
-    background: '#fff',
+    background: '#ffffff',
+    color: '#111827',
     padding: '12px 16px',
     borderRadius: 14,
     cursor: 'pointer',
+    fontWeight: 700,
   },
 
   dangerButton: {

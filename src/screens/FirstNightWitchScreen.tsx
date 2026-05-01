@@ -47,6 +47,47 @@ export default function FirstNightWitchScreen({
     <section style={styles.card}>
       <Bilingual zh="4. 第一夜：女巫" en="First night: Witch" />
 
+      <div style={styles.judgePanel}>
+        <div style={styles.judgeHeader}>
+          <Bilingual zh="法官宣读" en="Judge script" small />
+        </div>
+
+        <div style={styles.judgeContent}>
+          <Bilingual
+            zh={
+              <>
+                女巫请睁眼。
+                <br />
+                请确认你的身份。
+                <br />
+                <br />
+                今晚是否使用解药？
+                <br />
+                <br />
+                今晚是否使用毒药？
+                <br />
+                请选择一名玩家。
+              </>
+            }
+            en={
+              <>
+                Witch, please open your eyes.
+                <br />
+                Confirm your identity.
+                <br />
+                <br />
+                Do you want to use the antidote tonight?
+                <br />
+                <br />
+                Do you want to use poison tonight?
+                <br />
+                Choose one player.
+              </>
+            }
+          />
+        </div>
+      </div>
+
       <div style={{ marginTop: 16 }}>
         <Bilingual
           zh="先选中谁是女巫，点击下一步后才保存"
@@ -86,17 +127,38 @@ export default function FirstNightWitchScreen({
         />
       </div>
 
-      <div style={styles.tipBox}>
-        <Bilingual
-          zh={`今晚刀口：${wolfTarget ? `${wolfTarget.seat}号` : '未选择'}`}
-          en={
-            wolfTarget
-              ? `Tonight's target: Seat ${wolfTarget.seat}`
-              : `Tonight's target: not selected`
-          }
-          small
-        />
-      </div>
+      {!witchSaveUsed ? (
+        <div style={styles.targetBox}>
+          <Bilingual
+            zh={
+              <>
+                今晚刀口：{wolfTarget ? `${wolfTarget.seat}号` : '未选择'}
+                <br />
+                <span style={styles.gestureNote}>仅手势提示，勿读出声。</span>
+              </>
+            }
+            en={
+              <>
+                Tonight&apos;s target:{' '}
+                {wolfTarget ? `Seat ${wolfTarget.seat}` : 'not selected'}
+                <br />
+                <span style={styles.gestureNote}>
+                  Gesture only. Do not say aloud.
+                </span>
+              </>
+            }
+            small
+          />
+        </div>
+      ) : (
+        <div style={styles.hiddenTargetBox}>
+          <Bilingual
+            zh="刀口已隐藏。法官仍按正常节奏询问解药与毒药。"
+            en="Target is hidden. Keep the normal speaking rhythm for antidote and poison."
+            small
+          />
+        </div>
+      )}
 
       <label
         style={{
@@ -216,12 +278,44 @@ const styles: Record<string, CSSProperties> = {
     boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
     marginBottom: 20,
   },
-  tipBox: {
+  judgePanel: {
+    marginTop: 14,
+    padding: 16,
+    borderRadius: 16,
+    background: '#f5f3ff',
+    border: '1px solid #ddd6fe',
+  },
+  judgeHeader: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: '#6d28d9',
+    marginBottom: 8,
+  },
+  judgeContent: {
+    fontSize: 16,
+    fontWeight: 600,
+    color: '#111827',
+    lineHeight: 1.7,
+  },
+  targetBox: {
+    marginTop: 16,
+    padding: 14,
+    borderRadius: 14,
+    background: '#eff6ff',
+    color: '#1e3a8a',
+    border: '1px solid #bfdbfe',
+  },
+  hiddenTargetBox: {
     marginTop: 16,
     padding: 14,
     borderRadius: 14,
     background: '#f9fafb',
+    color: '#374151',
     border: '1px solid #e5e7eb',
+  },
+  gestureNote: {
+    color: '#b45309',
+    fontWeight: 700,
   },
   optionList: {
     display: 'flex',
@@ -254,9 +348,10 @@ const styles: Record<string, CSSProperties> = {
   },
   secondaryButton: {
     border: '1px solid #d1d5db',
+    background: '#ffffff',
+    color: '#111827',
     padding: '12px 16px',
     borderRadius: 14,
-    background: '#fff',
     cursor: 'pointer',
     fontWeight: 700,
   },
