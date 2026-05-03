@@ -1343,6 +1343,22 @@ export default function App() {
     setPlayers(nextPlayers);
     setWhiteWolfKingExploded(true);
     setWhiteWolfKingExplodeTargetId(null);
+
+    // 白狼王自爆后，白天立即结束，跳过投票
+    setVotes({});
+    setVoteRound(1);
+    setRevoteCandidateIds([]);
+    setVoteApplied(true);
+    setAppliedVoteSummary({
+      tally: {},
+      topTargets: [],
+      maxVotes: 0,
+      eliminatedId: null,
+      isTie: false,
+      shouldRevote: false,
+      message: '白狼王自爆，本日跳过投票',
+      english: 'White Wolf King exploded. Voting is skipped today.',
+    });
     setPhase('day-result');
 
     checkGameOver(nextPlayers);
@@ -1424,6 +1440,17 @@ export default function App() {
               small
             />
           </div>
+          {phase !== 'setup' && (
+            <div style={{ marginTop: 14, textAlign: 'center' }}>
+              <button
+                type="button"
+                style={styles.headerResetButton}
+                onClick={resetCurrentGame}
+              >
+                <Bilingual zh="重开本局" en="Restart game" small />
+              </button>
+            </div>
+          )}
         </div>
 
         <div style={styles.phaseBar}>
@@ -1932,5 +1959,15 @@ const styles: Record<string, CSSProperties> = {
     gap: 10,
     fontSize: 15,
     color: '#111827',
+  },
+  headerResetButton: {
+    border: '1px solid #fecaca',
+    background: '#ffffff',
+    color: '#b91c1c',
+    padding: '8px 14px',
+    borderRadius: 999,
+    cursor: 'pointer',
+    fontWeight: 700,
+    fontSize: 13,
   },
 };
