@@ -1,4 +1,4 @@
-import type { Player, GameConfig, Role } from '../types';
+import type { Player, GameConfig, Phase, Role } from '../types';
 import { getNextFirstNightPhase, finalizeUnassignedVillagers } from '../utils/gameFlow';
 
 /**
@@ -14,7 +14,7 @@ export function createStandardRoleCommitHandler(
     setPlayers: (fn: (prev: Player[]) => Player[]) => void;
     setRoleOwnerId: (id: number | null) => void;
     setDraftRoleOwnerId: (id: number | null) => void;
-    setPhase: (phase: string) => void;
+    setPhase: (phase: Phase) => void;
     setFirstNightDone: (done: boolean) => void;
   }
 ) {
@@ -79,7 +79,7 @@ export function createWolvesCommitHandler(
   callbacks: {
     setPlayers: (fn: (prev: Player[]) => Player[]) => void;
     setSelectedWolfIds: (ids: number[]) => void;
-    setPhase: (phase: string) => void;
+    setPhase: (phase: Phase) => void;
   }
 ) {
   return () => {
@@ -115,7 +115,7 @@ export function createWhiteWolfKingCommitHandler(
   callbacks: {
     setPlayers: (fn: (prev: Player[]) => Player[]) => void;
     setWhiteWolfKingOwnerId: (id: number | null) => void;
-    setPhase: (phase: string) => void;
+    setPhase: (phase: Phase) => void;
     setFirstNightDone: (done: boolean) => void;
   }
 ) {
@@ -162,7 +162,7 @@ export function createWolfBeautyCommitHandler(
     setPlayers: (fn: (prev: Player[]) => Player[]) => void;
     setWolfBeautyOwnerId: (id: number | null) => void;
     setLastWolfBeautyCharmTargetId: (id: number | null) => void;
-    setPhase: (phase: string) => void;
+    setPhase: (phase: Phase) => void;
     setFirstNightDone: (done: boolean) => void;
   }
 ) {

@@ -6,8 +6,6 @@ import Bilingual from './components/Bilingual';
 import {
   getIncludedGodCount,
   getPlayerCount,
-  finalizeUnassignedVillagers,
-  getNextFirstNightPhase,
   getPrevFirstNightPhase,
   getNextNightPhaseAfterWolf,
   getNextNightPhaseAfterWolfBeauty,
@@ -44,11 +42,9 @@ import FirstNightBearScreen from './screens/FirstNightBearScreen';
 import { getBearInfo } from './utils/bearLogic';
 import {
   shouldTriggerWolfBeautyLoverDeath,
-  getWolfBeautyCharmedPlayer,
   type WolfBeautyDeathSource,
 } from './utils/wolfBeautyLogic';
 
-import { isGod, isWolf, isVillager } from './utils/roleUtils';
 import {
   createStandardRoleCommitHandler,
   createWolvesCommitHandler,
@@ -58,7 +54,6 @@ import {
 import {
   calculateVoteSummary as calculateVoteSummaryLogic,
   checkGameOver as checkGameOverLogic,
-  checkIdiotLogic,
   applyWolfBeautyLoverDeath as applyWolfBeautyLoverDeathLogic,
 } from './logic/gameRules';
 
