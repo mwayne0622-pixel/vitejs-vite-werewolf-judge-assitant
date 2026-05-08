@@ -55,6 +55,12 @@ import {
   createWhiteWolfKingCommitHandler,
   createWolfBeautyCommitHandler,
 } from './roles/roleHandlers';
+import {
+  calculateVoteSummary as calculateVoteSummaryLogic,
+  checkGameOver as checkGameOverLogic,
+  checkIdiotLogic,
+  applyWolfBeautyLoverDeath as applyWolfBeautyLoverDeathLogic,
+} from './logic/gameRules';
 
 const STORAGE_KEY = 'wolf-judge-assistant-vote-split-v2';
 
@@ -71,16 +77,10 @@ const defaultConfig: GameConfig = {
   hasBear: false,
 };
 
-type VoteSummary = {
-  tally: Record<number, number>;
-  topTargets: number[];
-  maxVotes: number;
-  eliminatedId: number | null;
-  isTie: boolean;
-  message: string;
-  english: string;
-};
+// 从 gameRules 导入的类型
+import type { VoteSummary } from './logic/gameRules';
 
+// 为了兼容性，提供包装函数
 function calculateVoteSummary(params: {
   votes: Record<number, number | null>;
   currentVoters: Player[];
@@ -88,86 +88,7 @@ function calculateVoteSummary(params: {
   players: Player[];
   voteRound: 1 | 2;
 }): VoteSummary & { shouldRevote: boolean } {
-  const { votes, currentVoters, currentVoteTargets, players, voteRound } = params;
-
-  const tally: Record<number, number> = {};
-
-  currentVoters.forEach((player) => {
-    const targetId = votes[player.id];
-    if (
-      targetId != null &&
-      currentVoteTargets.some((target) => target.id === targetId)
-    ) {
-      tally[targetId] = (tally[targetId] || 0) + 1;
-    }
-  });
-
-  const entries = Object.entries(tally).map(([targetId, count]) => ({
-    targetId: Number(targetId),
-    count,
-  }));
-
-  if (entries.length === 0) {
-    return {
-      tally,
-      topTargets: [],
-      maxVotes: 0,
-      eliminatedId: null,
-      isTie: false,
-      shouldRevote: false,
-      message: voteRound === 1 ? '尚未产生有效投票' : '尚未产生有效再投票',
-      english: voteRound === 1 ? 'No valid votes yet' : 'No valid revotes yet',
-    };
-  }
-
-  const maxVotes = Math.max(...entries.map((e) => e.count));
-  const topTargets = entries
-    .filter((e) => e.count === maxVotes)
-    .map((e) => e.targetId);
-
-  if (topTargets.length === 1) {
-    const eliminated = players.find((p) => p.id === topTargets[0]) ?? null;
-    return {
-      tally,
-      topTargets,
-      maxVotes,
-      eliminatedId: topTargets[0],
-      isTie: false,
-      shouldRevote: false,
-      message: `投票出局：${eliminated?.seat}号`,
-      english: `Voted out: Seat ${eliminated?.seat ?? ''}`,
-    };
-  }
-
-  if (voteRound === 1) {
-    return {
-      tally,
-      topTargets,
-      maxVotes,
-      eliminatedId: null,
-      isTie: true,
-      shouldRevote: true,
-      message: `平票，进入第二轮投票：${topTargets
-        .map((id) => {
-          const p = players.find((player) => player.id === id);
-          return p ? `${p.seat}号` : '';
-        })
-        .filter(Boolean)
-        .join('、')}`,
-      english: 'Tie vote, proceed to revote',
-    };
-  }
-
-  return {
-    tally,
-    topTargets,
-    maxVotes,
-    eliminatedId: null,
-    isTie: true,
-    shouldRevote: false,
-    message: '第二轮仍平票，无人出局',
-    english: 'Revote tied, no one is eliminated',
-  };
+  return calculateVoteSummaryLogic(params);
 }
 
 export default function App() {
@@ -813,36 +734,20 @@ export default function App() {
       return basePlayers;
     }
 
-    const wolfBeauty = basePlayers.find((p) => p.role === '狼美人') ?? null;
+    const wolfBeautyPlayer = basePlayers.find((p) => p.role === '狼美人');
+    const result = applyWolfBeautyLoverDeathLogic({
+      players: basePlayers,
+      wolfBeautyPlayerId: wolfBeautyPlayer?.id ?? null,
+      charmedTargetId: lastWolfBeautyCharmTargetId,
+    });
 
-    if (!wolfBeauty) {
-      return basePlayers;
+    if (result.triggered) {
+      setWolfBeautyLoverMessage(result.message);
+      setWolfBeautyLoverEnglish(result.english);
+      return result.nextPlayers;
     }
 
-    // 狼美人必须已经死亡，殉情才会发生
-    if (wolfBeauty.alive) {
-      return basePlayers;
-    }
-
-    const charmedPlayer = getWolfBeautyCharmedPlayer(
-      basePlayers,
-      lastWolfBeautyCharmTargetId
-    );
-
-    if (!charmedPlayer || !charmedPlayer.alive) {
-      return basePlayers;
-    }
-
-    setWolfBeautyLoverMessage(
-      `狼美人殉情：${charmedPlayer.seat}号随狼美人一同出局`
-    );
-    setWolfBeautyLoverEnglish(
-      `Wolf Beauty lover death: Seat ${charmedPlayer.seat} dies with the Wolf Beauty`
-    );
-
-    return basePlayers.map((player) =>
-      player.id === charmedPlayer.id ? { ...player, alive: false } : player
-    );
+    return basePlayers;
   }
 
   function applyDayResult() {
@@ -1214,33 +1119,11 @@ export default function App() {
   }
 
   function checkGameOver(nextPlayers: Player[]) {
-    const aliveWolves = nextPlayers.filter(
-      (p) => p.alive && isWolf(p.role)
-    ).length;
+    const result = checkGameOverLogic({ players: nextPlayers });
 
-    const aliveVillagers = nextPlayers.filter(
-      (p) => p.alive && isVillager(p.role)
-    ).length;
-
-    const aliveGods = nextPlayers.filter(
-      (p) => p.alive && isGod(p.role)
-    ).length;
-
-    if (aliveWolves === 0) {
+    if (result.gameOver) {
       setGameOver(true);
-      setGameResult('好人阵营胜利 / Good team wins');
-      return true;
-    }
-
-    if (aliveVillagers === 0) {
-      setGameOver(true);
-      setGameResult('狼人阵营胜利 / Wolves win');
-      return true;
-    }
-
-    if (aliveGods === 0) {
-      setGameOver(true);
-      setGameResult('狼人阵营胜利 / Wolves win');
+      setGameResult(`${result.result} / ${result.english}`);
       return true;
     }
 
