@@ -1,6 +1,6 @@
-import type { CSSProperties } from 'react';
 import Bilingual from '../components/Bilingual';
 import type { Player } from '../types';
+import PlayerSelectButton from '../components/PlayerSelectButton';
 
 type Props = {
   alivePlayers: Player[];
@@ -10,33 +10,6 @@ type Props = {
   onNext: () => void;
 };
 
-function roleToEnglish(role: Player['role']) {
-  switch (role) {
-    case '狼人':
-      return 'Wolf';
-    case '白狼王':
-      return 'White Wolf King';
-    case '狼美人':
-      return 'Wolf Beauty';
-    case '预言家':
-      return 'Seer';
-    case '女巫':
-      return 'Witch';
-    case '守卫':
-      return 'Guard';
-    case '猎人':
-      return 'Hunter';
-    case '白痴':
-      return 'Idiot';
-    case '熊':
-      return 'Bear';
-    case '村民':
-      return 'Villager';
-    default:
-      return 'Unknown';
-  }
-}
-
 export default function NightWolfScreen({
   alivePlayers,
   wolfTargetId,
@@ -45,71 +18,44 @@ export default function NightWolfScreen({
   onNext,
 }: Props) {
   return (
-    <section style={styles.card}>
+    <section className="bg-[var(--color-wolf-card)] rounded-2xl p-5 mb-5 shadow-[var(--shadow-card)] border border-[var(--color-wolf-border)]">
       <Bilingual zh="夜晚：狼人行动" en="Night: Wolves act" />
 
-      <div style={styles.judgePanel}>
-        <div style={styles.judgeHeader}>
+      <div className="mt-3.5 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
+        <div className="text-xs font-bold text-[#818cf8] mb-2">
           <Bilingual zh="法官宣读" en="Judge script" small />
         </div>
-
-        <div style={styles.judgeContent}>
+        <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
           <Bilingual
-            zh={
-              <>
-                狼人请睁眼。
-                <br />
-                请选择今晚要袭击的玩家。
-              </>
-            }
-            en={
-              <>
-                Wolves, please open your eyes.
-                <br />
-                Choose tonight&apos;s target.
-              </>
-            }
+            zh={<>狼人请睁眼。<br />请选择今晚要袭击的玩家。</>}
+            en={<>Wolves, please open your eyes.<br />Choose tonight&apos;s target.</>}
           />
         </div>
       </div>
 
-      <div style={styles.tipBox}>
-        <Bilingual
-          zh="狼人可以选择任意存活玩家作为刀口，包括自己。"
-          en="Wolves may target any alive player, including themselves."
-          small
-        />
+      <div className="mt-4 p-3.5 rounded-xl bg-[var(--color-wolf-surface)] border border-[var(--color-wolf-border)] text-[var(--color-moon-dim)] text-xs">
+        <Bilingual zh="狼人可以选择任意存活玩家作为刀口，包括自己。" en="Wolves may target any alive player, including themselves." small />
       </div>
 
-      <div style={styles.optionList}>
-        {alivePlayers.map((player) => (
-          <button
-            key={player.id}
-            type="button"
-            style={{
-              ...styles.optionButton,
-              background: wolfTargetId === player.id ? '#111827' : '#ffffff',
-              color: wolfTargetId === player.id ? '#ffffff' : '#111827',
-            }}
-            onClick={() => onSelectTarget(player.id)}
-          >
-            <Bilingual
-              zh={`${player.seat}号 - ${player.role ?? '未确认'}`}
-              en={`Seat ${player.seat} - ${roleToEnglish(player.role)}`}
-              small
+      <div className="flex flex-wrap gap-2 mt-4">
+        {alivePlayers.map((player) => {
+          const selected = wolfTargetId === player.id;
+          return (
+            <PlayerSelectButton
+              key={player.id}
+              player={player}
+              selected={selected}
+              showRole
+              onClick={() => onSelectTarget(player.id)}
             />
-          </button>
-        ))}
+          );
+        })}
       </div>
 
-      <div style={styles.actionRow}>
+      <div className="flex flex-wrap gap-3 mt-5">
         <button
           type="button"
-          style={{
-            ...styles.primaryButton,
-            opacity: canGoNext ? 1 : 0.5,
-            cursor: canGoNext ? 'pointer' : 'not-allowed',
-          }}
+          className={`px-4 py-3 rounded-xl font-bold text-sm border-none cursor-pointer transition-all ${canGoNext ? 'bg-[var(--color-blood)] text-white hover:brightness-110 shadow-[var(--shadow-glow-blood)]' : 'bg-[var(--color-wolf-card-alt)] text-[var(--color-moon-dim)] cursor-not-allowed opacity-50'}`}
           disabled={!canGoNext}
           onClick={onNext}
         >
@@ -119,71 +65,3 @@ export default function NightWolfScreen({
     </section>
   );
 }
-
-const styles: Record<string, CSSProperties> = {
-  card: {
-    background: '#ffffff',
-    borderRadius: 20,
-    padding: 20,
-    boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
-    marginBottom: 20,
-  },
-  judgePanel: {
-    marginTop: 14,
-    padding: 16,
-    borderRadius: 16,
-    background: '#f5f3ff',
-    border: '1px solid #ddd6fe',
-  },
-  judgeHeader: {
-    fontSize: 14,
-    fontWeight: 700,
-    color: '#6d28d9',
-    marginBottom: 8,
-  },
-  judgeContent: {
-    fontSize: 16,
-    fontWeight: 600,
-    color: '#111827',
-    lineHeight: 1.7,
-  },
-  tipBox: {
-    marginTop: 16,
-    padding: 14,
-    borderRadius: 14,
-    background: '#f9fafb',
-    color: '#374151',
-    border: '1px solid #e5e7eb',
-  },
-  optionList: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 10,
-  },
-  optionButton: {
-    border: '1px solid #d1d5db',
-    borderRadius: 14,
-    padding: '12px 14px',
-    cursor: 'pointer',
-    fontSize: 14,
-    background: '#ffffff',
-    minWidth: 120,
-    textAlign: 'left',
-  },
-  actionRow: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginTop: 20,
-  },
-  primaryButton: {
-    border: 'none',
-    background: '#111827',
-    color: '#ffffff',
-    padding: '12px 16px',
-    borderRadius: 14,
-    cursor: 'pointer',
-    fontWeight: 700,
-  },
-};

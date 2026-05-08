@@ -3,7 +3,7 @@
  * 所有函数都是纯函数，无副作用，便于单元测试
  */
 
-import type { Player, GameConfig } from '../types';
+import type { Player } from '../types';
 import { isWolf, isVillager, isGod } from '../utils/roleUtils';
 
 // ============================================================================
@@ -221,7 +221,7 @@ export type IdiotVoteResult =
  * - 已翻牌白痴被投出 → 禁止，无人出局
  */
 export function checkIdiotLogic(params: IdiotVoteResultParams): IdiotVoteResult {
-  const { eliminatedId, players, idiotRevealed } = params;
+  const { eliminatedId, players } = params;
 
   const eliminatedPlayer = eliminatedId ? players.find((p) => p.id === eliminatedId) : null;
 

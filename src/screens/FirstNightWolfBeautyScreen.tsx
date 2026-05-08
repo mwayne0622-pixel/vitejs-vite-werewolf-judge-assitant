@@ -1,6 +1,6 @@
-import type { CSSProperties } from 'react';
 import Bilingual from '../components/Bilingual';
 import type { Player } from '../types';
+import PlayerSelectButton from '../components/PlayerSelectButton';
 
 type Props = {
   players: Player[];
@@ -27,54 +27,27 @@ export default function FirstNightWolfBeautyScreen({
   onBack,
   onNext,
 }: Props) {
-  const selectedWolfBeauty =
-    draftWolfBeautyOwnerId !== null
-      ? players.find((p) => p.id === draftWolfBeautyOwnerId) ?? null
-      : null;
-
-  const selectedCharmTarget =
-    wolfBeautyCharmTargetId !== null
-      ? players.find((p) => p.id === wolfBeautyCharmTargetId) ?? null
-      : null;
-
-  const charmTargets = alivePlayers.filter(
-    (player) => player.id !== draftWolfBeautyOwnerId
-  );
+  const selectedWolfBeauty = draftWolfBeautyOwnerId !== null ? players.find((p) => p.id === draftWolfBeautyOwnerId) ?? null : null;
+  const selectedCharmTarget = wolfBeautyCharmTargetId !== null ? players.find((p) => p.id === wolfBeautyCharmTargetId) ?? null : null;
+  const charmTargets = alivePlayers.filter((player) => player.id !== draftWolfBeautyOwnerId);
 
   return (
-    <section style={styles.card}>
+    <section className="bg-[var(--color-wolf-card)] rounded-2xl p-5 mb-5 shadow-[var(--shadow-card)] border border-[var(--color-wolf-border)]">
       <Bilingual zh="确认狼美人" en="Confirm Wolf Beauty" />
 
-      <div style={styles.judgePanel}>
-        <div style={styles.judgeHeader}>
+      <div className="mt-3.5 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
+        <div className="text-xs font-bold text-[#818cf8] mb-2">
           <Bilingual zh="法官宣读" en="Judge script" small />
         </div>
-
-        <div style={styles.judgeContent}>
+        <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
           <Bilingual
-            zh={
-              <>
-                狼美人请睁眼。
-                <br />
-                请确认你的身份。
-                <br />
-                请指出今晚你要魅惑的对象。
-              </>
-            }
-            en={
-              <>
-                Wolf Beauty, please open your eyes.
-                <br />
-                Confirm your identity.
-                <br />
-                Choose the player you want to charm tonight.
-              </>
-            }
+            zh={<>狼美人请睁眼。<br />请确认你的身份。<br />请指出今晚你要魅惑的对象。</>}
+            en={<>Wolf Beauty, please open your eyes.<br />Confirm your identity.<br />Choose the player you want to charm tonight.</>}
           />
         </div>
       </div>
 
-      <div style={styles.tipBox}>
+      <div className="mt-4 p-3.5 rounded-xl bg-[var(--color-wolf-surface)] border border-[var(--color-wolf-border)] text-[var(--color-moon-dim)] text-xs">
         <Bilingual
           zh="请从已选中的狼人中，再指定 1 名玩家为狼美人。狼美人属于狼人阵营，占用一个狼位。第一夜也需要同时选择魅惑目标。"
           en="Please choose 1 player from the selected wolves to be the Wolf Beauty. The Wolf Beauty belongs to the wolf camp and occupies one wolf slot. On the first night, also choose a charm target."
@@ -82,132 +55,76 @@ export default function FirstNightWolfBeautyScreen({
         />
       </div>
 
-      <div style={{ marginTop: 16 }}>
-        <Bilingual zh="当前狼人名单" en="Current wolf list" small />
-      </div>
-
-      <div style={styles.playerList}>
-        {selectablePlayers.map((player) => {
-          const selected = draftWolfBeautyOwnerId === player.id;
-          const displayName = player.name?.trim() || `${player.seat}号玩家`;
-
-          return (
-            <button
-              key={player.id}
-              type="button"
-              style={{
-                ...styles.playerButton,
-                background: selected ? '#111827' : '#ffffff',
-                color: selected ? '#ffffff' : '#111827',
-                borderColor: selected ? '#111827' : '#d1d5db',
-              }}
-              onClick={() => onSelectWolfBeauty(player.id)}
-            >
-              <div style={styles.playerMainLine}>
-                <strong>{player.seat}号</strong>
-                <span>{displayName}</span>
-              </div>
-
-              <div style={styles.playerSubLine}>
-                <Bilingual
-                  zh={selected ? '已设为狼美人' : '点击设为狼美人'}
-                  en={selected ? 'Selected as Wolf Beauty' : 'Click to assign'}
-                  small
-                />
-              </div>
-            </button>
-          );
-        })}
+      <div className="mt-4">
+        <div className="text-[var(--color-moon-dim)] text-xs mb-3">
+          <Bilingual zh="当前狼人名单" en="Current wolf list" small />
+        </div>
+        <div className="flex flex-col gap-2.5">
+          {selectablePlayers.map((player) => {
+            const selected = draftWolfBeautyOwnerId === player.id;
+            return (
+              <PlayerSelectButton
+                key={player.id}
+                player={player}
+                selected={selected}
+                sublabel={selected ? '已设为狼美人 · Selected as Wolf Beauty' : '点击设为狼美人 · Click to assign'}
+                onClick={() => onSelectWolfBeauty(player.id)}
+              />
+            );
+          })}
+        </div>
       </div>
 
       {selectedWolfBeauty && (
-        <div style={styles.summaryBox}>
-          <Bilingual
-            zh={`当前选择：${selectedWolfBeauty.seat}号为狼美人`}
-            en={`Current selection: Seat ${selectedWolfBeauty.seat} as Wolf Beauty`}
-            small
-          />
+        <div className="mt-3 p-3 rounded-xl bg-[var(--color-wolf-surface)] border border-[var(--color-wolf-border-hi)] text-[var(--color-moon)] text-xs">
+          <Bilingual zh={`当前选择：${selectedWolfBeauty.seat}号为狼美人`} en={`Current selection: Seat ${selectedWolfBeauty.seat} as Wolf Beauty`} small />
         </div>
       )}
 
-      <div style={{ marginTop: 20 }}>
-        <Bilingual zh="第一夜魅惑目标" en="First night charm target" small />
-      </div>
-
-      <div style={styles.charmTipBox}>
-        <Bilingual
-          zh="请选择狼美人第一夜魅惑的玩家。魅惑目标不会立即死亡，只有狼美人因投票、女巫毒药或猎人开枪出局时，最后一次被魅惑的玩家才会殉情。"
-          en="Choose the Wolf Beauty's first-night charm target. The target does not die immediately. If the Wolf Beauty is later voted out, poisoned, or shot by the Hunter, the last charmed player dies with her."
-          small
-        />
-      </div>
-
-      <div style={styles.playerList}>
-        {charmTargets.map((player) => {
-          const selected = wolfBeautyCharmTargetId === player.id;
-          const displayName = player.name?.trim() || `${player.seat}号玩家`;
-          const disabled = draftWolfBeautyOwnerId === null;
-
-          return (
-            <button
-              key={player.id}
-              type="button"
-              disabled={disabled}
-              style={{
-                ...styles.playerButton,
-                background: selected ? '#111827' : '#ffffff',
-                color: selected ? '#ffffff' : '#111827',
-                borderColor: selected ? '#111827' : '#d1d5db',
-                opacity: disabled ? 0.5 : 1,
-                cursor: disabled ? 'not-allowed' : 'pointer',
-              }}
-              onClick={() => {
-                if (!disabled) {
-                  onSelectCharmTarget(player.id);
-                }
-              }}
-            >
-              <div style={styles.playerMainLine}>
-                <strong>{player.seat}号</strong>
-                <span>{displayName}</span>
-              </div>
-
-              <div style={styles.playerSubLine}>
-                <Bilingual
-                  zh={selected ? '已设为魅惑目标' : '点击设为魅惑目标'}
-                  en={selected ? 'Selected as charm target' : 'Click to charm'}
-                  small
-                />
-              </div>
-            </button>
-          );
-        })}
+      <div className="mt-5">
+        <div className="text-[var(--color-moon-dim)] text-xs mb-2">
+          <Bilingual zh="第一夜魅惑目标" en="First night charm target" small />
+        </div>
+        <div className="mt-2 p-3.5 rounded-xl bg-[var(--color-amber-dim)] border border-[var(--color-amber-border)] text-[var(--color-amber-wolf)] text-xs mb-3">
+          <Bilingual
+            zh="请选择狼美人第一夜魅惑的玩家。魅惑目标不会立即死亡，只有狼美人因投票、女巫毒药或猎人开枪出局时，最后一次被魅惑的玩家才会殉情。"
+            en="Choose the Wolf Beauty's first-night charm target. The target does not die immediately. If the Wolf Beauty is later voted out, poisoned, or shot by the Hunter, the last charmed player dies with her."
+            small
+          />
+        </div>
+        <div className="flex flex-col gap-2.5">
+          {charmTargets.map((player) => {
+            const selected = wolfBeautyCharmTargetId === player.id;
+            const disabled = draftWolfBeautyOwnerId === null;
+            return (
+              <PlayerSelectButton
+                key={player.id}
+                player={player}
+                selected={selected}
+                disabled={disabled}
+                sublabel={selected ? '已设为魅惑目标 · Selected as charm target' : '点击设为魅惑目标 · Click to charm'}
+                onClick={() => { if (!disabled) onSelectCharmTarget(player.id); }}
+              />
+            );
+          })}
+        </div>
       </div>
 
       {selectedCharmTarget && (
-        <div style={styles.summaryBox}>
-          <Bilingual
-            zh={`当前魅惑目标：${selectedCharmTarget.seat}号`}
-            en={`Current charm target: Seat ${selectedCharmTarget.seat}`}
-            small
-          />
+        <div className="mt-3 p-3 rounded-xl bg-[var(--color-wolf-surface)] border border-[var(--color-wolf-border-hi)] text-[var(--color-moon)] text-xs">
+          <Bilingual zh={`当前魅惑目标：${selectedCharmTarget.seat}号`} en={`Current charm target: Seat ${selectedCharmTarget.seat}`} small />
         </div>
       )}
 
-      <div style={styles.actionRow}>
-        <button type="button" style={styles.secondaryButton} onClick={onBack}>
+      <div className="flex flex-wrap gap-3 mt-5">
+        <button type="button" className="px-4 py-3 rounded-xl font-bold text-sm border border-[var(--color-wolf-border-hi)] bg-[var(--color-wolf-card-alt)] text-[var(--color-moon)] cursor-pointer hover:border-[var(--color-moon-dim)] transition-colors" onClick={onBack}>
           <Bilingual zh="返回" en="Back" small />
         </button>
-
         <button
           type="button"
-          style={{
-            ...styles.primaryButton,
-            opacity: canGoNext ? 1 : 0.5,
-            cursor: canGoNext ? 'pointer' : 'not-allowed',
-          }}
-          onClick={onNext}
+          className={`px-4 py-3 rounded-xl font-bold text-sm border-none cursor-pointer transition-all ${canGoNext ? 'bg-[var(--color-blood)] text-white hover:brightness-110 shadow-[var(--shadow-glow-blood)]' : 'bg-[var(--color-wolf-card-alt)] text-[var(--color-moon-dim)] cursor-not-allowed opacity-50'}`}
           disabled={!canGoNext}
+          onClick={onNext}
         >
           <Bilingual zh="下一步" en="Next" small />
         </button>
@@ -215,103 +132,3 @@ export default function FirstNightWolfBeautyScreen({
     </section>
   );
 }
-
-const styles: Record<string, CSSProperties> = {
-  card: {
-    background: '#ffffff',
-    borderRadius: 20,
-    padding: 20,
-    boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
-    marginBottom: 20,
-  },
-  judgePanel: {
-    marginTop: 14,
-    padding: 16,
-    borderRadius: 16,
-    background: '#f5f3ff',
-    border: '1px solid #ddd6fe',
-  },
-  judgeHeader: {
-    fontSize: 14,
-    fontWeight: 700,
-    color: '#6d28d9',
-    marginBottom: 8,
-  },
-  judgeContent: {
-    fontSize: 16,
-    fontWeight: 600,
-    color: '#111827',
-    lineHeight: 1.7,
-  },
-  tipBox: {
-    marginTop: 16,
-    padding: 14,
-    borderRadius: 14,
-    background: '#f9fafb',
-    color: '#374151',
-    border: '1px solid #e5e7eb',
-  },
-  charmTipBox: {
-    marginTop: 12,
-    padding: 14,
-    borderRadius: 14,
-    background: '#fff7ed',
-    color: '#9a3412',
-    border: '1px solid #fdba74',
-  },
-  playerList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 12,
-    marginTop: 12,
-  },
-  playerButton: {
-    border: '1px solid #d1d5db',
-    borderRadius: 16,
-    padding: 14,
-    background: '#ffffff',
-    textAlign: 'left',
-    cursor: 'pointer',
-  },
-  playerMainLine: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-    fontSize: 15,
-  },
-  playerSubLine: {
-    marginTop: 8,
-    opacity: 0.9,
-  },
-  summaryBox: {
-    marginTop: 16,
-    padding: 14,
-    borderRadius: 14,
-    background: '#f9fafb',
-    border: '1px solid #e5e7eb',
-  },
-  actionRow: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginTop: 20,
-  },
-  primaryButton: {
-    border: 'none',
-    background: '#111827',
-    color: '#ffffff',
-    padding: '12px 16px',
-    borderRadius: 14,
-    cursor: 'pointer',
-    fontWeight: 700,
-  },
-  secondaryButton: {
-    border: '1px solid #d1d5db',
-    background: '#ffffff',
-    color: '#111827',
-    padding: '12px 16px',
-    borderRadius: 14,
-    cursor: 'pointer',
-    fontWeight: 700,
-  },
-};

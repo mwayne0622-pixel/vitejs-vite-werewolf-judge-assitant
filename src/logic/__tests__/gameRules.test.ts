@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import type { Player } from '../../types';
+import type { Player, Role } from '../../types';
 import {
   calculateDayResult,
   calculateVoteSummary,
@@ -36,7 +36,7 @@ function createPlayers(...roles: Array<string | null>): Player[] {
     createMockPlayer({
       id: index + 1,
       seat: index + 1,
-      role: (role as any) || null,
+      role: role as (Role | null),
     })
   );
 }
@@ -277,7 +277,8 @@ describe('checkIdiotLogic', () => {
     });
 
     expect(result.type).toBe('idiot-triggered');
-    expect((result as any).nextPlayers[0].idiotRevealed).toBe(true);
+    if (result.type !== 'idiot-triggered') return;
+    expect(result.nextPlayers[0].idiotRevealed).toBe(true);
   });
 
   it('已翻牌白痴被投出时保护', () => {
@@ -303,7 +304,8 @@ describe('checkIdiotLogic', () => {
     });
 
     expect(result.type).toBe('normal');
-    expect((result as any).nextPlayers[0].alive).toBe(false);
+    if (result.type !== 'normal') return;
+    expect(result.nextPlayers[0].alive).toBe(false);
   });
 
   it('无人被消亡时', () => {
@@ -316,7 +318,8 @@ describe('checkIdiotLogic', () => {
     });
 
     expect(result.type).toBe('normal');
-    expect((result as any).nextPlayers[0].alive).toBe(true);
+    if (result.type !== 'normal') return;
+    expect(result.nextPlayers[0].alive).toBe(true);
   });
 });
 
@@ -333,7 +336,8 @@ describe('checkGameOver', () => {
     const result = checkGameOver({ players });
 
     expect(result.gameOver).toBe(true);
-    expect((result as any).result).toContain('好人');
+    if (!result.gameOver) return;
+    expect(result.result).toContain('好人');
   });
 
   it('村民全灭 → 狼人胜利', () => {
@@ -344,7 +348,8 @@ describe('checkGameOver', () => {
     const result = checkGameOver({ players });
 
     expect(result.gameOver).toBe(true);
-    expect((result as any).result).toContain('狼人');
+    if (!result.gameOver) return;
+    expect(result.result).toContain('狼人');
   });
 
   it('所有神全灭 → 狼人胜利', () => {
@@ -355,7 +360,8 @@ describe('checkGameOver', () => {
     const result = checkGameOver({ players });
 
     expect(result.gameOver).toBe(true);
-    expect((result as any).result).toContain('狼人');
+    if (!result.gameOver) return;
+    expect(result.result).toContain('狼人');
   });
 
   it('游戏未结束', () => {

@@ -22,7 +22,7 @@ export function createStandardRoleCommitHandler(
     if (draftOwnerId === null) return;
 
     // 获取该 role 对应的首夜 phase
-    const rolePhaseMap: Record<Role, any> = {
+    const rolePhaseMap: Record<Role, Phase> = {
       '预言家': 'first-night-seer',
       '女巫': 'first-night-witch',
       '守卫': 'first-night-guard',

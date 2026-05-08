@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { CSSProperties } from 'react';
 
 import type { MaybeRole, Phase, Player, GameConfig } from './types';
-import Bilingual from './components/Bilingual';
 import {
   getIncludedGodCount,
   getPlayerCount,
@@ -40,6 +38,7 @@ import NightWolfBeautyScreen from './screens/NightWolfBeautyScreen';
 
 import FirstNightBearScreen from './screens/FirstNightBearScreen';
 import { getBearInfo } from './utils/bearLogic';
+import { getPhaseIcon, isNightPhase } from './utils/roleDisplay';
 import {
   shouldTriggerWolfBeautyLoverDeath,
   type WolfBeautyDeathSource,
@@ -58,6 +57,19 @@ import {
 } from './logic/gameRules';
 
 const STORAGE_KEY = 'wolf-judge-assistant-vote-split-v2';
+
+let _savedCache: Record<string, unknown> | null | undefined;
+function getSavedOnce(): Record<string, unknown> | null {
+  if (_savedCache === undefined) {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      _savedCache = raw ? JSON.parse(raw) : null;
+    } catch {
+      _savedCache = null;
+    }
+  }
+  return _savedCache;
+}
 
 const defaultConfig: GameConfig = {
   villagerCount: 2,
@@ -87,179 +99,95 @@ function calculateVoteSummary(params: {
 }
 
 export default function App() {
-  const [config, setConfig] = useState<GameConfig>(defaultConfig);
-  const [phase, setPhase] = useState<Phase>('setup');
-  const [players, setPlayers] = useState<Player[]>(
-    createBlankPlayers(getPlayerCount(defaultConfig))
-  );
+  const [config, setConfig] = useState<GameConfig>(() => (getSavedOnce()?.config as GameConfig) ?? defaultConfig);
+  const [phase, setPhase] = useState<Phase>(() => (getSavedOnce()?.phase as Phase) ?? 'setup');
+  const [players, setPlayers] = useState<Player[]>(() => {
+    const s = getSavedOnce();
+    if (Array.isArray(s?.players)) return s.players as Player[];
+    const cfg = (s?.config as GameConfig) ?? defaultConfig;
+    return createBlankPlayers(getPlayerCount(cfg));
+  });
 
-  const [firstNightDone, setFirstNightDone] = useState(false);
+  const [firstNightDone, setFirstNightDone] = useState(() => Boolean(getSavedOnce()?.firstNightDone));
 
-  const [selectedWolfIds, setSelectedWolfIds] = useState<number[]>([]);
-  const [wolfTargetId, setWolfTargetId] = useState<number | null>(null);
+  const [selectedWolfIds, setSelectedWolfIds] = useState<number[]>(() => {
+    const v = getSavedOnce()?.selectedWolfIds;
+    return Array.isArray(v) ? (v as number[]) : [];
+  });
+  const [wolfTargetId, setWolfTargetId] = useState<number | null>(() => (getSavedOnce()?.wolfTargetId as number | null) ?? null);
 
-  const [whiteWolfKingOwnerId, setWhiteWolfKingOwnerId] = useState<number | null>(null);
-  const [draftWhiteWolfKingOwnerId, setDraftWhiteWolfKingOwnerId] = useState<number | null>(null);
+  const [whiteWolfKingOwnerId, setWhiteWolfKingOwnerId] = useState<number | null>(() => (getSavedOnce()?.whiteWolfKingOwnerId as number | null) ?? null);
+  const [draftWhiteWolfKingOwnerId, setDraftWhiteWolfKingOwnerId] = useState<number | null>(() => (getSavedOnce()?.draftWhiteWolfKingOwnerId as number | null) ?? null);
 
-  const [whiteWolfKingExploded, setWhiteWolfKingExploded] = useState(false);
-  const [whiteWolfKingExplodeTargetId, setWhiteWolfKingExplodeTargetId] = useState<number | null>(null);
+  const [whiteWolfKingExploded, setWhiteWolfKingExploded] = useState(() => Boolean(getSavedOnce()?.whiteWolfKingExploded));
+  const [whiteWolfKingExplodeTargetId, setWhiteWolfKingExplodeTargetId] = useState<number | null>(() => (getSavedOnce()?.whiteWolfKingExplodeTargetId as number | null) ?? null);
 
-  const [wolfBeautyOwnerId, setWolfBeautyOwnerId] = useState<number | null>(null);
-  const [draftWolfBeautyOwnerId, setDraftWolfBeautyOwnerId] = useState<number | null>(null);
+  const [wolfBeautyOwnerId, setWolfBeautyOwnerId] = useState<number | null>(() => (getSavedOnce()?.wolfBeautyOwnerId as number | null) ?? null);
+  const [draftWolfBeautyOwnerId, setDraftWolfBeautyOwnerId] = useState<number | null>(() => (getSavedOnce()?.draftWolfBeautyOwnerId as number | null) ?? null);
 
-  const [wolfBeautyCharmTargetId, setWolfBeautyCharmTargetId] = useState<number | null>(null);
-  const [lastWolfBeautyCharmTargetId, setLastWolfBeautyCharmTargetId] = useState<number | null>(null);
+  const [wolfBeautyCharmTargetId, setWolfBeautyCharmTargetId] = useState<number | null>(() => (getSavedOnce()?.wolfBeautyCharmTargetId as number | null) ?? null);
+  const [lastWolfBeautyCharmTargetId, setLastWolfBeautyCharmTargetId] = useState<number | null>(() => (getSavedOnce()?.lastWolfBeautyCharmTargetId as number | null) ?? null);
 
-  const [wolfBeautyLoverMessage, setWolfBeautyLoverMessage] = useState<string | null>(null);
-  const [wolfBeautyLoverEnglish, setWolfBeautyLoverEnglish] = useState<string | null>(null);
+  const [wolfBeautyLoverMessage, setWolfBeautyLoverMessage] = useState<string | null>(() => (getSavedOnce()?.wolfBeautyLoverMessage as string | null) ?? null);
+  const [wolfBeautyLoverEnglish, setWolfBeautyLoverEnglish] = useState<string | null>(() => (getSavedOnce()?.wolfBeautyLoverEnglish as string | null) ?? null);
 
-  const [seerOwnerId, setSeerOwnerId] = useState<number | null>(null);
-  const [draftSeerOwnerId, setDraftSeerOwnerId] = useState<number | null>(null);
-  const [seerCheckId, setSeerCheckId] = useState<number | null>(null);
+  const [seerOwnerId, setSeerOwnerId] = useState<number | null>(() => (getSavedOnce()?.seerOwnerId as number | null) ?? null);
+  const [draftSeerOwnerId, setDraftSeerOwnerId] = useState<number | null>(() => (getSavedOnce()?.draftSeerOwnerId as number | null) ?? null);
+  const [seerCheckId, setSeerCheckId] = useState<number | null>(() => (getSavedOnce()?.seerCheckId as number | null) ?? null);
 
-  const [witchOwnerId, setWitchOwnerId] = useState<number | null>(null);
-  const [draftWitchOwnerId, setDraftWitchOwnerId] = useState<number | null>(
-    null
-  );
-  const [witchSave, setWitchSave] = useState(false);
-  const [witchPoisonId, setWitchPoisonId] = useState<number | null>(null);
+  const [witchOwnerId, setWitchOwnerId] = useState<number | null>(() => (getSavedOnce()?.witchOwnerId as number | null) ?? null);
+  const [draftWitchOwnerId, setDraftWitchOwnerId] = useState<number | null>(() => (getSavedOnce()?.draftWitchOwnerId as number | null) ?? null);
+  const [witchSave, setWitchSave] = useState(() => Boolean(getSavedOnce()?.witchSave));
+  const [witchPoisonId, setWitchPoisonId] = useState<number | null>(() => (getSavedOnce()?.witchPoisonId as number | null) ?? null);
 
-  const [guardOwnerId, setGuardOwnerId] = useState<number | null>(null);
-  const [draftGuardOwnerId, setDraftGuardOwnerId] = useState<number | null>(
-    null
-  );
-  const [guardTargetId, setGuardTargetId] = useState<number | null>(null);
+  const [guardOwnerId, setGuardOwnerId] = useState<number | null>(() => (getSavedOnce()?.guardOwnerId as number | null) ?? null);
+  const [draftGuardOwnerId, setDraftGuardOwnerId] = useState<number | null>(() => (getSavedOnce()?.draftGuardOwnerId as number | null) ?? null);
+  const [guardTargetId, setGuardTargetId] = useState<number | null>(() => (getSavedOnce()?.guardTargetId as number | null) ?? null);
 
-  const [hunterOwnerId, setHunterOwnerId] = useState<number | null>(null);
-  const [draftHunterOwnerId, setDraftHunterOwnerId] = useState<number | null>(
-    null
-  );
+  const [hunterOwnerId, setHunterOwnerId] = useState<number | null>(() => (getSavedOnce()?.hunterOwnerId as number | null) ?? null);
+  const [draftHunterOwnerId, setDraftHunterOwnerId] = useState<number | null>(() => (getSavedOnce()?.draftHunterOwnerId as number | null) ?? null);
 
-  const [witchSaveUsed, setWitchSaveUsed] = useState(false);
-  const [witchPoisonUsed, setWitchPoisonUsed] = useState(false);
-  const [lastGuardTargetId, setLastGuardTargetId] = useState<number | null>(
-    null
-  );
+  const [witchSaveUsed, setWitchSaveUsed] = useState(() => Boolean(getSavedOnce()?.witchSaveUsed));
+  const [witchPoisonUsed, setWitchPoisonUsed] = useState(() => Boolean(getSavedOnce()?.witchPoisonUsed));
+  const [lastGuardTargetId, setLastGuardTargetId] = useState<number | null>(() => (getSavedOnce()?.lastGuardTargetId as number | null) ?? null);
 
-  const [dayApplied, setDayApplied] = useState(false);
+  const [dayApplied, setDayApplied] = useState(() => Boolean(getSavedOnce()?.dayApplied));
 
-  const [votes, setVotes] = useState<Record<number, number | null>>({});
-  const [voteApplied, setVoteApplied] = useState(false);
+  const [votes, setVotes] = useState<Record<number, number | null>>(() => (getSavedOnce()?.votes as Record<number, number | null>) ?? {});
+  const [voteApplied, setVoteApplied] = useState(() => Boolean(getSavedOnce()?.voteApplied));
 
-  const [voteRound, setVoteRound] = useState<1 | 2>(1);
-  const [revoteCandidateIds, setRevoteCandidateIds] = useState<number[]>([]);
+  const [voteRound, setVoteRound] = useState<1 | 2>(() => getSavedOnce()?.voteRound === 2 ? 2 : 1);
+  const [revoteCandidateIds, setRevoteCandidateIds] = useState<number[]>(() => {
+    const v = getSavedOnce()?.revoteCandidateIds;
+    return Array.isArray(v) ? (v as number[]) : [];
+  });
 
   const [appliedVoteSummary, setAppliedVoteSummary] = useState<
     (VoteSummary & { shouldRevote: boolean }) | null
-  >(null);
+  >(() => (getSavedOnce()?.appliedVoteSummary as (VoteSummary & { shouldRevote: boolean }) | null) ?? null);
 
   const [hunterShootSource, setHunterShootSource] = useState<
     'night' | 'vote' | null
-  >(null);
-  const [hunterShotTargetId, setHunterShotTargetId] = useState<number | null>(
-    null
-  );
-  const [hunterShotUsed, setHunterShotUsed] = useState(false);
-  const [hunterShotMessage, setHunterShotMessage] = useState<string | null>(null);
-  const [hunterShotEnglish, setHunterShotEnglish] = useState<string | null>(null);
+  >(() => (getSavedOnce()?.hunterShootSource as 'night' | 'vote' | null) ?? null);
+  const [hunterShotTargetId, setHunterShotTargetId] = useState<number | null>(() => (getSavedOnce()?.hunterShotTargetId as number | null) ?? null);
+  const [hunterShotUsed, setHunterShotUsed] = useState(() => Boolean(getSavedOnce()?.hunterShotUsed));
+  const [hunterShotMessage, setHunterShotMessage] = useState<string | null>(() => (getSavedOnce()?.hunterShotMessage as string | null) ?? null);
+  const [hunterShotEnglish, setHunterShotEnglish] = useState<string | null>(() => (getSavedOnce()?.hunterShotEnglish as string | null) ?? null);
 
-  const [whiteWolfKingMessage, setWhiteWolfKingMessage] = useState<string | null>(null);
-  const [whiteWolfKingEnglish, setWhiteWolfKingEnglish] = useState<string | null>(null);
+  const [whiteWolfKingMessage, setWhiteWolfKingMessage] = useState<string | null>(() => (getSavedOnce()?.whiteWolfKingMessage as string | null) ?? null);
+  const [whiteWolfKingEnglish, setWhiteWolfKingEnglish] = useState<string | null>(() => (getSavedOnce()?.whiteWolfKingEnglish as string | null) ?? null);
 
-  const [idiotOwnerId, setIdiotOwnerId] = useState<number | null>(null);
-  const [draftIdiotOwnerId, setDraftIdiotOwnerId] = useState<number | null>(null);
+  const [idiotOwnerId, setIdiotOwnerId] = useState<number | null>(() => (getSavedOnce()?.idiotOwnerId as number | null) ?? null);
+  const [draftIdiotOwnerId, setDraftIdiotOwnerId] = useState<number | null>(() => (getSavedOnce()?.draftIdiotOwnerId as number | null) ?? null);
 
-  const [draftBearOwnerId, setDraftBearOwnerId] = useState<number | null>(null);
-  const [bearOwnerId, setBearOwnerId] = useState<number | null>(null);
+  const [draftBearOwnerId, setDraftBearOwnerId] = useState<number | null>(() => (getSavedOnce()?.draftBearOwnerId as number | null) ?? null);
+  const [bearOwnerId, setBearOwnerId] = useState<number | null>(() => (getSavedOnce()?.bearOwnerId as number | null) ?? null);
 
-  const [gameOver, setGameOver] = useState(false);
-  const [gameResult, setGameResult] = useState<string | null>(null);
+  const [gameOver, setGameOver] = useState(() => Boolean(getSavedOnce()?.gameOver));
+  const [gameResult, setGameResult] = useState<string | null>(() => (getSavedOnce()?.gameResult as string | null) ?? null);
 
   const playerCount = getPlayerCount(config);
   const configValid = config.wolfCount >= 1 && config.villagerCount >= 0;
-
-  useEffect(() => {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-
-    try {
-      const data = JSON.parse(raw);
-      const loadedConfig: GameConfig = data.config ?? defaultConfig;
-
-      setConfig(loadedConfig);
-      setPhase(data.phase ?? 'setup');
-      setPlayers(
-        Array.isArray(data.players)
-          ? data.players
-          : createBlankPlayers(getPlayerCount(loadedConfig))
-      );
-
-      setFirstNightDone(Boolean(data.firstNightDone));
-
-      setSelectedWolfIds(
-        Array.isArray(data.selectedWolfIds) ? data.selectedWolfIds : []
-      );
-      setWolfTargetId(data.wolfTargetId ?? null);
-
-      setWhiteWolfKingOwnerId(data.whiteWolfKingOwnerId ?? null);
-      setDraftWhiteWolfKingOwnerId(data.draftWhiteWolfKingOwnerId ?? null);
-      setWhiteWolfKingExploded(Boolean(data.whiteWolfKingExploded));
-      setWhiteWolfKingExplodeTargetId(data.whiteWolfKingExplodeTargetId ?? null);
-
-      setWolfBeautyOwnerId(data.wolfBeautyOwnerId ?? null);
-      setDraftWolfBeautyOwnerId(data.draftWolfBeautyOwnerId ?? null);
-      setWolfBeautyCharmTargetId(data.wolfBeautyCharmTargetId ?? null);
-      setLastWolfBeautyCharmTargetId(data.lastWolfBeautyCharmTargetId ?? null);
-      setWolfBeautyLoverMessage(data.wolfBeautyLoverMessage ?? null);
-      setWolfBeautyLoverEnglish(data.wolfBeautyLoverEnglish ?? null);
-
-      setSeerOwnerId(data.seerOwnerId ?? null);
-      setDraftSeerOwnerId(data.draftSeerOwnerId ?? null);
-      setSeerCheckId(data.seerCheckId ?? null);
-
-      setWitchOwnerId(data.witchOwnerId ?? null);
-      setDraftWitchOwnerId(data.draftWitchOwnerId ?? null);
-      setWitchSave(Boolean(data.witchSave));
-      setWitchPoisonId(data.witchPoisonId ?? null);
-
-      setGuardOwnerId(data.guardOwnerId ?? null);
-      setDraftGuardOwnerId(data.draftGuardOwnerId ?? null);
-      setGuardTargetId(data.guardTargetId ?? null);
-
-      setHunterOwnerId(data.hunterOwnerId ?? null);
-      setDraftHunterOwnerId(data.draftHunterOwnerId ?? null);
-
-      setWitchSaveUsed(Boolean(data.witchSaveUsed));
-      setWitchPoisonUsed(Boolean(data.witchPoisonUsed));
-      setLastGuardTargetId(data.lastGuardTargetId ?? null);
-
-      setDayApplied(Boolean(data.dayApplied));
-      setVotes(data.votes ?? {});
-      setVoteApplied(Boolean(data.voteApplied));
-
-      setVoteRound(data.voteRound === 2 ? 2 : 1);
-      setRevoteCandidateIds(Array.isArray(data.revoteCandidateIds) ? data.revoteCandidateIds : []);
-      setAppliedVoteSummary(data.appliedVoteSummary ?? null);
-
-      setHunterShootSource(data.hunterShootSource ?? null);
-      setHunterShotTargetId(data.hunterShotTargetId ?? null);
-      setHunterShotUsed(Boolean(data.hunterShotUsed));
-
-      setHunterShotMessage(data.hunterShotMessage ?? null);
-      setHunterShotEnglish(data.hunterShotEnglish ?? null);
-
-      setIdiotOwnerId(data.idiotOwnerId ?? null);
-      setDraftIdiotOwnerId(data.draftIdiotOwnerId ?? null);
-
-      setBearOwnerId(data.bearOwnerId ?? null);
-      setDraftBearOwnerId(data.draftBearOwnerId ?? null);
-
-      setGameOver(Boolean(data.gameOver));
-      setGameResult(data.gameResult ?? null);
-    } catch {
-      // ignore bad cache
-    }
-  }, []);
 
   useEffect(() => {
     localStorage.setItem(
@@ -1151,40 +1079,67 @@ export default function App() {
   const laterNightPoisonDisabled = witchIsDead || witchPoisonUsed || witchSave;
 
   return (
-    <div style={styles.page}>
-      <div style={styles.container}>
-        <div style={styles.headerBlock}>
-          <Bilingual
-            zh="狼人杀法官助手"
-            en="Werewolf Judge Assistant"
-            align="center"
-          />
-          <div style={{ marginTop: 10 }}>
-            <Bilingual
-              zh="首夜确认身份并同步完成动作"
-              en="First night confirms identities and completes actions at the same time"
-              align="center"
-              small
-            />
-          </div>
-          {phase !== 'setup' && (
-            <div style={{ marginTop: 14, textAlign: 'center' }}>
+    <div className="min-h-screen bg-[var(--color-wolf-bg)] py-6 px-4">
+      <div className="max-w-[980px] mx-auto">
+
+        {/* ── Header ── */}
+        <header className="mb-5 relative overflow-hidden rounded-2xl bg-[var(--color-wolf-card)] border border-[var(--color-wolf-border)] shadow-[var(--shadow-card)]">
+          {/* top accent line */}
+          <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-[var(--color-blood)] to-transparent" />
+          <div className="px-5 py-5 text-center">
+            <div className="flex items-center justify-center gap-3">
+              <span className="text-2xl select-none">🐺</span>
+              <h1 className="text-2xl font-black tracking-[0.15em] text-[var(--color-moon-bright)] uppercase" style={{ fontFamily: 'system-ui, sans-serif' }}>
+                狼人杀
+              </h1>
+              <span className="text-2xl select-none">🐺</span>
+            </div>
+            <div className="mt-1 text-[11px] font-semibold tracking-[0.3em] uppercase text-[var(--color-blood)] opacity-80">
+              WEREWOLF · JUDGE · ASSISTANT
+            </div>
+            <div className="my-3 flex items-center gap-2">
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent to-[var(--color-wolf-border-hi)]" />
+              <span className="text-[10px] text-[var(--color-moon-dim)] tracking-widest uppercase">Judge Tool</span>
+              <div className="flex-1 h-px bg-gradient-to-l from-transparent to-[var(--color-wolf-border-hi)]" />
+            </div>
+            {phase !== 'setup' && (
               <button
                 type="button"
-                style={styles.headerResetButton}
+                className="border border-[var(--color-blood)] bg-transparent text-[var(--color-blood)] hover:bg-[var(--color-blood-glow)] px-4 py-1.5 rounded-full cursor-pointer font-bold text-xs transition-colors tracking-wide"
                 onClick={resetCurrentGame}
               >
-                <Bilingual zh="重开本局" en="Restart game" small />
+                ↺ 重开本局 · Restart
               </button>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+          {/* bottom accent line */}
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-[var(--color-wolf-border-hi)] to-transparent" />
+        </header>
 
-        <div style={styles.phaseBar}>
-          <Bilingual
-            zh={`当前阶段：${getPhaseLabel(phase)}`}
-            en={getPhaseEnglish(phase)}
-          />
+        {/* ── Phase badge ── */}
+        <div className={`mb-5 px-4 py-3 rounded-xl border flex items-center gap-3 ${
+          isNightPhase(phase)
+            ? 'bg-[#0e0b1f] border-[#3730a3]'
+            : phase === 'day-result' || phase === 'day-vote'
+              ? 'bg-[var(--color-amber-dim)] border-[var(--color-amber-border)]'
+              : phase === 'hunter-shoot' || phase === 'white-wolf-king-explode'
+                ? 'bg-[var(--color-blood-dim)] border-[var(--color-blood)]'
+                : 'bg-[var(--color-wolf-surface)] border-[var(--color-wolf-border)]'
+        }`}>
+          <span className="text-xl select-none flex-shrink-0">{getPhaseIcon(phase)}</span>
+          <div className="flex-1 min-w-0">
+            <div className={`font-bold text-sm tracking-wide ${
+              isNightPhase(phase) ? 'text-[#818cf8]'
+              : phase === 'day-result' || phase === 'day-vote' ? 'text-[#fde68a]'
+              : phase === 'hunter-shoot' || phase === 'white-wolf-king-explode' ? 'text-[var(--color-dead-text)]'
+              : 'text-[var(--color-moon-bright)]'
+            }`}>
+              {getPhaseLabel(phase)}
+            </div>
+            <div className="text-[10px] text-[var(--color-moon-dim)] mt-0.5 tracking-wider">
+              {getPhaseEnglish(phase).replace('Current phase: ', '')}
+            </div>
+          </div>
         </div>
 
         {phase === 'setup' && (
@@ -1586,115 +1541,3 @@ function getPhaseEnglish(phase: Phase) {
   }
 }
 
-const styles: Record<string, CSSProperties> = {
-  page: {
-    minHeight: '100vh',
-    background: '#f3f4f6',
-    padding: '24px 16px',
-    fontFamily:
-      'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  },
-  container: {
-    maxWidth: 980,
-    margin: '0 auto',
-  },
-  headerBlock: {
-    marginBottom: 20,
-    padding: 20,
-    borderRadius: 20,
-    background: '#ffffff',
-    boxShadow: '0 10px 30px rgba(0,0,0,0.06)',
-  },
-  phaseBar: {
-    marginBottom: 20,
-    padding: 14,
-    borderRadius: 14,
-    background: '#e5e7eb',
-    color: '#111827',
-  },
-  card: {
-    background: '#ffffff',
-    borderRadius: 20,
-    padding: 20,
-    boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
-    marginBottom: 20,
-  },
-  tipBox: {
-    marginTop: 16,
-    padding: 14,
-    borderRadius: 14,
-    background: '#f9fafb',
-    color: '#374151',
-    border: '1px solid #e5e7eb',
-  },
-  deadNotice: {
-    marginTop: 16,
-    padding: 14,
-    borderRadius: 14,
-    background: '#fff7ed',
-    color: '#9a3412',
-    border: '1px solid #fdba74',
-  },
-  optionList: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 10,
-  },
-  optionButton: {
-    border: '1px solid #d1d5db',
-    borderRadius: 14,
-    padding: '12px 14px',
-    cursor: 'pointer',
-    fontSize: 14,
-    background: '#ffffff',
-  },
-  actionRow: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginTop: 20,
-  },
-  primaryButton: {
-    border: 'none',
-    background: '#111827',
-    color: '#ffffff',
-    padding: '12px 16px',
-    borderRadius: 14,
-    cursor: 'pointer',
-    fontWeight: 700,
-  },
-  secondaryButton: {
-    border: '1px solid #d1d5db',
-    background: '#ffffff',
-    color: '#111827',
-    padding: '12px 16px',
-    borderRadius: 14,
-    cursor: 'pointer',
-    fontWeight: 700,
-  },
-  resultBox: {
-    marginTop: 12,
-    padding: 16,
-    borderRadius: 16,
-    background: '#eff6ff',
-    color: '#1e3a8a',
-  },
-  checkboxRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-    fontSize: 15,
-    color: '#111827',
-  },
-  headerResetButton: {
-    border: '1px solid #fecaca',
-    background: '#ffffff',
-    color: '#b91c1c',
-    padding: '8px 14px',
-    borderRadius: 999,
-    cursor: 'pointer',
-    fontWeight: 700,
-    fontSize: 13,
-  },
-};

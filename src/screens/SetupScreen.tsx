@@ -1,4 +1,3 @@
-import type { CSSProperties } from 'react';
 import Bilingual from '../components/Bilingual';
 import NumberStepper from '../components/NumberStepper';
 import type { GameConfig, Player } from '../types';
@@ -15,6 +14,43 @@ type Props = {
   onStartGame: () => void;
 };
 
+function CheckboxCard({
+  checked,
+  onChange,
+  zh,
+  en,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  zh: string;
+  en: string;
+}) {
+  return (
+    <label
+      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border cursor-pointer transition-colors select-none ${
+        checked
+          ? 'border-[var(--color-blood)] bg-[var(--color-blood-glow)] text-[var(--color-moon-bright)]'
+          : 'border-[var(--color-wolf-border)] bg-[var(--color-wolf-card-alt)] text-[var(--color-moon)]'
+      }`}
+    >
+      <input
+        type="checkbox"
+        className="hidden"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      <span
+        className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${
+          checked ? 'border-[var(--color-blood)] bg-[var(--color-blood)]' : 'border-[var(--color-wolf-border-hi)]'
+        }`}
+      >
+        {checked && <span className="text-white text-[10px] leading-none">✓</span>}
+      </span>
+      <span className="text-sm font-semibold">{zh}<br /><small className="font-normal text-[var(--color-moon-dim)] text-[11px]">{en}</small></span>
+    </label>
+  );
+}
+
 export default function SetupScreen({
   config,
   playerCount,
@@ -24,10 +60,10 @@ export default function SetupScreen({
   onStartGame,
 }: Props) {
   return (
-    <section style={styles.card}>
+    <section className="bg-[var(--color-wolf-card)] rounded-2xl p-5 mb-5 shadow-[var(--shadow-card)] border border-[var(--color-wolf-border)]">
       <Bilingual zh="1. 开局设置" en="Game setup" />
 
-      <div style={styles.grid2}>
+      <div className="grid grid-cols-2 gap-3 mt-4">
         <NumberStepper
           labelZh="狼人数量"
           labelEn="Number of wolves"
@@ -37,7 +73,6 @@ export default function SetupScreen({
           onChange={(next) => onUpdateConfig({ wolfCount: next })}
           unitZh="狼"
         />
-
         <NumberStepper
           labelZh="村民数量"
           labelEn="Number of villagers"
@@ -49,218 +84,81 @@ export default function SetupScreen({
         />
       </div>
 
-      <div style={{ marginTop: 16 }}>
-        <label style={styles.label}>
+      <div className="mt-5">
+        <div className="text-[var(--color-moon-bright)] font-bold text-sm mb-3">
           <Bilingual zh="本局加入的角色" en="Special roles included" small />
-        </label>
+        </div>
 
-        <div style={styles.roleGroup}>
-          <div style={styles.roleGroupTitle}>
+        <div className="mb-4">
+          <div className="text-[var(--color-moon-dim)] text-xs font-semibold mb-2 uppercase tracking-wider">
             <Bilingual zh="神职角色" en="God roles" small />
           </div>
-
-          <div style={styles.toggleWrap}>
-            <label style={styles.checkboxCard}>
-              <input
-                type="checkbox"
-                checked={config.hasSeer}
-                onChange={(e) => onUpdateConfig({ hasSeer: e.target.checked })}
-              />
-              <span>
-                预言家
-                <br />
-                <small>Seer</small>
-              </span>
-            </label>
-
-            <label style={styles.checkboxCard}>
-              <input
-                type="checkbox"
-                checked={config.hasWitch}
-                onChange={(e) => onUpdateConfig({ hasWitch: e.target.checked })}
-              />
-              <span>
-                女巫
-                <br />
-                <small>Witch</small>
-              </span>
-            </label>
-
-            <label style={styles.checkboxCard}>
-              <input
-                type="checkbox"
-                checked={config.hasGuard}
-                onChange={(e) => onUpdateConfig({ hasGuard: e.target.checked })}
-              />
-              <span>
-                守卫
-                <br />
-                <small>Guard</small>
-              </span>
-            </label>
-
-            <label style={styles.checkboxCard}>
-              <input
-                type="checkbox"
-                checked={config.hasHunter}
-                onChange={(e) =>
-                  onUpdateConfig({ hasHunter: e.target.checked })
-                }
-              />
-              <span>
-                猎人
-                <br />
-                <small>Hunter</small>
-              </span>
-            </label>
-
-            <label style={styles.checkboxCard}>
-              <input
-                type="checkbox"
-                checked={config.hasBear}
-                onChange={(e) => onUpdateConfig({ hasBear: e.target.checked })}
-              />
-              <span>
-                熊
-                <br />
-                <small>Bear</small>
-              </span>
-            </label>
-
-            <label style={styles.checkboxCard}>
-              <input
-                type="checkbox"
-                checked={config.hasIdiot}
-                onChange={(e) => onUpdateConfig({ hasIdiot: e.target.checked })}
-              />
-              <span>
-                白痴
-                <br />
-                <small>Idiot</small>
-              </span>
-            </label>
+          <div className="flex flex-wrap gap-2">
+            <CheckboxCard checked={config.hasSeer} onChange={(v) => onUpdateConfig({ hasSeer: v })} zh="预言家" en="Seer" />
+            <CheckboxCard checked={config.hasWitch} onChange={(v) => onUpdateConfig({ hasWitch: v })} zh="女巫" en="Witch" />
+            <CheckboxCard checked={config.hasGuard} onChange={(v) => onUpdateConfig({ hasGuard: v })} zh="守卫" en="Guard" />
+            <CheckboxCard checked={config.hasHunter} onChange={(v) => onUpdateConfig({ hasHunter: v })} zh="猎人" en="Hunter" />
+            <CheckboxCard checked={config.hasBear} onChange={(v) => onUpdateConfig({ hasBear: v })} zh="熊" en="Bear" />
+            <CheckboxCard checked={config.hasIdiot} onChange={(v) => onUpdateConfig({ hasIdiot: v })} zh="白痴" en="Idiot" />
           </div>
         </div>
 
-        <div style={styles.roleGroup}>
-          <div style={styles.roleGroupTitle}>
+        <div>
+          <div className="text-[var(--color-moon-dim)] text-xs font-semibold mb-2 uppercase tracking-wider">
             <Bilingual zh="狼人阵营角色" en="Wolf camp roles" small />
           </div>
-
-          <div style={styles.toggleWrap}>
-            <label style={styles.checkboxCard}>
-              <input
-                type="checkbox"
-                checked={config.hasWhiteWolfKing}
-                onChange={(e) =>
-                  onUpdateConfig({ hasWhiteWolfKing: e.target.checked })
-                }
-              />
-              <span>
-                白狼王
-                <br />
-                <small>White Wolf King</small>
-              </span>
-            </label>
-
-            <label style={styles.checkboxCard}>
-              <input
-                type="checkbox"
-                checked={config.hasWolfBeauty}
-                onChange={(e) =>
-                  onUpdateConfig({ hasWolfBeauty: e.target.checked })
-                }
-              />
-              <span>
-                狼美人
-                <br />
-                <small>Wolf Beauty</small>
-              </span>
-            </label>
+          <div className="flex flex-wrap gap-2">
+            <CheckboxCard checked={config.hasWhiteWolfKing} onChange={(v) => onUpdateConfig({ hasWhiteWolfKing: v })} zh="白狼王" en="White Wolf King" />
+            <CheckboxCard checked={config.hasWolfBeauty} onChange={(v) => onUpdateConfig({ hasWolfBeauty: v })} zh="狼美人" en="Wolf Beauty" />
           </div>
         </div>
       </div>
 
-      <div style={styles.tipBox}>
+      <div className="mt-4 p-3.5 rounded-xl bg-[var(--color-wolf-surface)] border border-[var(--color-wolf-border)] text-[var(--color-moon-dim)] text-xs leading-relaxed">
         <Bilingual
-          zh={
-            <>
-              请设置狼人数量、村民数量，以及加入的角色。
-              <br />
-              系统会自动计算总人数。
-              <br />
-              公式：总人数 = 狼人 + 神职 + 村民
-              <br />
-              白狼王和狼美人属于狼人阵营，占用一个狼位，不额外增加总人数。
-            </>
-          }
-          en={
-            <>
-              Set the number of wolves, villagers, and special roles.
-              <br />
-              The total player count is calculated automatically.
-              <br />
-              Formula: total = wolves + special roles + villagers
-              <br />
-              The White Wolf King and The Wolf Beauty belong to the wolf camp,
-              occupy wolf slots, and do not increase the total player count.
-            </>
-          }
+          zh={<>请设置狼人数量、村民数量，以及加入的角色。<br />系统会自动计算总人数。<br />公式：总人数 = 狼人 + 神职 + 村民<br />白狼王和狼美人属于狼人阵营，占用一个狼位，不额外增加总人数。</>}
+          en={<>Set the number of wolves, villagers, and special roles.<br />The total player count is calculated automatically.<br />Formula: total = wolves + special roles + villagers<br />The White Wolf King and Wolf Beauty occupy wolf slots, not extra seats.</>}
           small
         />
       </div>
 
-      <div style={styles.summaryBox}>
-        <div style={styles.summaryGrid}>
-          <div style={styles.summaryItem}>
-            <strong>狼人</strong>
-            <span>{config.wolfCount}</span>
-          </div>
-
-          <div style={styles.summaryItem}>
-            <strong>神职</strong>
-            <span>{includedGodCount}</span>
-          </div>
-
-          <div style={styles.summaryItem}>
-            <strong>村民</strong>
-            <span>{config.villagerCount}</span>
-          </div>
-
-          <div style={styles.summaryItem}>
-            <strong>总人数</strong>
-            <span>{playerCount}</span>
-          </div>
-
-          <div style={styles.summaryItem}>
-            <strong>状态</strong>
-            <span>{configValid ? '可开始' : '需调整'}</span>
-          </div>
+      <div className="mt-4 p-4 rounded-2xl bg-[var(--color-wolf-surface)] border border-[var(--color-wolf-border)]">
+        <div className="grid grid-cols-5 gap-2">
+          {[
+            { label: '狼人', value: config.wolfCount },
+            { label: '神职', value: includedGodCount },
+            { label: '村民', value: config.villagerCount },
+            { label: '总人数', value: playerCount },
+            { label: '状态', value: configValid ? '✓ 可开始' : '需调整' },
+          ].map(({ label, value }) => (
+            <div key={label} className="flex flex-col items-center gap-1 p-2.5 rounded-xl bg-[var(--color-wolf-card)] border border-[var(--color-wolf-border)]">
+              <strong className="text-[var(--color-moon-dim)] text-xs">{label}</strong>
+              <span className="text-[var(--color-moon-bright)] font-bold text-sm">{value}</span>
+            </div>
+          ))}
         </div>
 
-        <div style={styles.roleSummary}>
-          <span style={styles.roleChip}>
-            熊：{config.hasBear ? '开启' : '关闭'}
-          </span>
-          <span style={styles.roleChip}>
-            白痴：{config.hasIdiot ? '开启' : '关闭'}
-          </span>
-          <span style={styles.roleChip}>
-            白狼王：{config.hasWhiteWolfKing ? '开启' : '关闭'}
-          </span>
-          <span style={styles.roleChip}>
-            狼美人：{config.hasWolfBeauty ? '开启' : '关闭'}
-          </span>
+        <div className="flex flex-wrap gap-2 mt-3">
+          {[
+            { label: `熊：${config.hasBear ? '开启' : '关闭'}`, on: config.hasBear },
+            { label: `白痴：${config.hasIdiot ? '开启' : '关闭'}`, on: config.hasIdiot },
+            { label: `白狼王：${config.hasWhiteWolfKing ? '开启' : '关闭'}`, on: config.hasWhiteWolfKing },
+            { label: `狼美人：${config.hasWolfBeauty ? '开启' : '关闭'}`, on: config.hasWolfBeauty },
+          ].map(({ label, on }) => (
+            <span key={label} className={`px-2.5 py-1 rounded-full text-xs border ${on ? 'border-[var(--color-blood)] text-[var(--color-moon-bright)]' : 'border-[var(--color-wolf-border)] text-[var(--color-moon-dim)]'}`}>
+              {label}
+            </span>
+          ))}
         </div>
       </div>
 
-      <div style={styles.actionRow}>
+      <div className="flex flex-wrap gap-3 mt-5">
         <button
-          style={{
-            ...styles.primaryButton,
-            opacity: configValid ? 1 : 0.5,
-            cursor: configValid ? 'pointer' : 'not-allowed',
-          }}
+          className={`border-none px-4 py-3 rounded-xl font-bold text-sm cursor-pointer transition-all ${
+            configValid
+              ? 'bg-[var(--color-blood)] text-white hover:brightness-110 shadow-[var(--shadow-glow-blood)]'
+              : 'bg-[var(--color-wolf-card-alt)] text-[var(--color-moon-dim)] cursor-not-allowed opacity-50'
+          }`}
           onClick={onStartGame}
           disabled={!configValid}
         >
@@ -270,104 +168,3 @@ export default function SetupScreen({
     </section>
   );
 }
-
-const styles: Record<string, CSSProperties> = {
-  card: {
-    background: '#ffffff',
-    borderRadius: 20,
-    padding: 20,
-    boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
-    marginBottom: 20,
-  },
-  label: {
-    display: 'block',
-    marginBottom: 8,
-    color: '#111827',
-    fontWeight: 700,
-  },
-  grid2: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-    gap: 14,
-  },
-  toggleWrap: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  checkboxCard: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    padding: '10px 12px',
-    border: '1px solid #d1d5db',
-    borderRadius: 12,
-    background: '#fff',
-  },
-  tipBox: {
-    marginTop: 16,
-    padding: 14,
-    borderRadius: 14,
-    background: '#f9fafb',
-    color: '#374151',
-    border: '1px solid #e5e7eb',
-  },
-  summaryBox: {
-    marginTop: 18,
-    padding: 16,
-    borderRadius: 18,
-    background: '#f9fafb',
-    border: '1px solid #e5e7eb',
-  },
-  summaryGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
-    gap: 10,
-  },
-  summaryItem: {
-    padding: 12,
-    borderRadius: 14,
-    background: '#ffffff',
-    border: '1px solid #e5e7eb',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 4,
-    alignItems: 'center',
-  },
-  roleSummary: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 12,
-  },
-  roleChip: {
-    padding: '6px 10px',
-    borderRadius: 999,
-    background: '#ffffff',
-    border: '1px solid #e5e7eb',
-    fontSize: 13,
-  },
-  actionRow: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginTop: 20,
-  },
-  primaryButton: {
-    border: 'none',
-    background: '#111827',
-    color: '#ffffff',
-    padding: '12px 16px',
-    borderRadius: 14,
-    cursor: 'pointer',
-    fontWeight: 700,
-  },
-  roleGroup: {
-    marginTop: 14,
-  },
-  roleGroupTitle: {
-    marginBottom: 8,
-    fontWeight: 700,
-    color: '#374151',
-  },
-};

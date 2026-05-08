@@ -14,23 +14,11 @@ export default function Bilingual({
   small = false,
 }: Props) {
   return (
-    <div style={{ textAlign: align }}>
-      <div
-        style={{
-          fontSize: small ? 14 : undefined,
-          fontWeight: small ? 600 : undefined,
-        }}
-      >
+    <div className={align === 'center' ? 'text-center' : 'text-left'}>
+      <div className={small ? 'text-sm font-semibold text-[var(--color-moon-bright)]' : 'text-base text-[var(--color-moon-bright)]'}>
         {zh}
       </div>
-      <div
-        style={{
-          marginTop: 2,
-          fontSize: small ? 11 : 12,
-          color: '#6b7280',
-          lineHeight: 1.25,
-        }}
-      >
+      <div className={`mt-0.5 text-[var(--color-moon-dim)] leading-tight ${small ? 'text-[11px]' : 'text-xs'}`}>
         {en}
       </div>
     </div>

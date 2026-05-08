@@ -1,4 +1,3 @@
-import type { CSSProperties } from 'react';
 import Bilingual from '../components/Bilingual';
 import type { Player } from '../types';
 
@@ -26,31 +25,22 @@ type BearInfo = {
 type Props = {
   players: Player[];
   dayResult: DayResult;
-
   voteSummary: VoteSummary;
   voteApplied: boolean;
   unvotedPlayers?: Player[];
-
   dayApplied: boolean;
   gameOver: boolean;
   gameResult: string | null;
-
   whiteWolfKingOwnerId: number | null;
   canWhiteWolfKingExplode: boolean;
-
   bearInfo: BearInfo | null;
-
   wolfBeautyLoverMessage: string | null;
   wolfBeautyLoverEnglish: string | null;
-
   hunterShotMessage: string | null;
   hunterShotEnglish: string | null;
-
   whiteWolfKingMessage: string | null;
   whiteWolfKingEnglish: string | null;
-
   onStartWhiteWolfKingExplode: () => void;
-
   onBack: () => void;
   onApplyDayResult: () => void;
   onGoToVote: () => void;
@@ -59,69 +49,45 @@ type Props = {
 };
 
 function roleLabel(player: Player) {
-  if (player.role === '白痴' && player.idiotRevealed) {
-    return '白痴（已翻牌）';
-  }
+  if (player.role === '白痴' && player.idiotRevealed) return '白痴（已翻牌）';
   return player.role ?? '未确认';
 }
 
 function roleToEnglish(player: Player) {
-  if (player.role === '白痴' && player.idiotRevealed) {
-    return 'Idiot (Revealed)';
-  }
-
+  if (player.role === '白痴' && player.idiotRevealed) return 'Idiot (Revealed)';
   switch (player.role) {
-    case '狼人':
-      return 'Wolf';
-    case '白狼王':
-      return 'White Wolf King';
-    case '狼美人':
-      return 'Wolf Beauty';
-    case '预言家':
-      return 'Seer';
-    case '女巫':
-      return 'Witch';
-    case '守卫':
-      return 'Guard';
-    case '猎人':
-      return 'Hunter';
-    case '白痴':
-      return 'Idiot';
-    case '熊':
-      return 'Bear';
-    case '村民':
-      return 'Villager';
-    default:
-      return 'Unconfirmed';
+    case '狼人': return 'Wolf';
+    case '白狼王': return 'White Wolf King';
+    case '狼美人': return 'Wolf Beauty';
+    case '预言家': return 'Seer';
+    case '女巫': return 'Witch';
+    case '守卫': return 'Guard';
+    case '猎人': return 'Hunter';
+    case '白痴': return 'Idiot';
+    case '熊': return 'Bear';
+    case '村民': return 'Villager';
+    default: return 'Unconfirmed';
   }
 }
 
 export default function DayResultScreen({
   players,
   dayResult,
-
   voteSummary,
   voteApplied,
   unvotedPlayers = [],
-
   dayApplied,
   gameOver,
   gameResult,
-
   whiteWolfKingOwnerId,
   canWhiteWolfKingExplode,
-
   bearInfo,
-
   wolfBeautyLoverMessage,
   wolfBeautyLoverEnglish,
-
   hunterShotMessage,
   hunterShotEnglish,
-
   whiteWolfKingMessage,
   whiteWolfKingEnglish,
-
   onBack,
   onApplyDayResult,
   onGoToVote,
@@ -135,67 +101,44 @@ export default function DayResultScreen({
   const canStartNextNight = !gameOver && voteApplied;
 
   return (
-    <section style={styles.card}>
+    <section className="bg-[var(--color-wolf-card)] rounded-2xl p-5 mb-5 shadow-[var(--shadow-card)] border border-[var(--color-wolf-border)]">
       <Bilingual zh="天亮结果" en="Day result" />
 
-      <div style={{ marginTop: 12 }}>
+      <div className="mt-3">
         <Bilingual zh="法官宣读信息" en="Judge announcements" small />
       </div>
 
-      <div style={styles.announcementStack}>
+      <div className="flex flex-col gap-3 mt-2.5">
         {gameOver ? (
-          <div style={styles.announcementBox}>
-            <Bilingual
-              zh={gameResult ?? '游戏结束'}
-              en={gameResult ?? 'Game over'}
-            />
+          <div className="p-4 rounded-2xl bg-[var(--color-blood-dim)] border border-[var(--color-blood)] text-[var(--color-moon-bright)]">
+            <Bilingual zh={gameResult ?? '游戏结束'} en={gameResult ?? 'Game over'} />
           </div>
         ) : (
           <>
-            <div style={styles.announcementBox}>
+            <div className="p-4 rounded-2xl bg-[var(--color-amber-dim)] border border-[var(--color-amber-border)] text-[#fde68a]">
               <Bilingual zh={dayResult.message} en={dayResult.english} />
             </div>
+
             {hunterShotMessage && hunterShotEnglish && (
-              <div style={styles.warningBox}>
-                <Bilingual
-                  zh={hunterShotMessage}
-                  en={hunterShotEnglish}
-                  small
-                />
+              <div className="p-3.5 rounded-xl bg-[var(--color-blood-dim)] border border-[var(--color-blood)] text-[var(--color-moon-bright)]">
+                <Bilingual zh={hunterShotMessage} en={hunterShotEnglish} small />
               </div>
             )}
+
             {whiteWolfKingMessage && whiteWolfKingEnglish && (
-              <div style={styles.warningBox}>
-                <Bilingual
-                  zh={whiteWolfKingMessage}
-                  en={whiteWolfKingEnglish}
-                  small
-                />
+              <div className="p-3.5 rounded-xl bg-[var(--color-blood-dim)] border border-[var(--color-blood)] text-[var(--color-moon-bright)]">
+                <Bilingual zh={whiteWolfKingMessage} en={whiteWolfKingEnglish} small />
               </div>
             )}
 
             {bearInfo && (
-              <div style={styles.announcementBox}>
+              <div className="p-4 rounded-2xl bg-[var(--color-amber-dim)] border border-[var(--color-amber-border)] text-[#fde68a]">
                 <Bilingual zh={bearInfo.message} en={bearInfo.english} />
-
                 {bearInfo.bearPlayer && bearInfo.bearPlayer.alive && (
-                  <div style={styles.announcementDetail}>
+                  <div className="mt-2 opacity-80">
                     <Bilingual
-                      zh={`熊：${bearInfo.bearPlayer.seat}号 ｜ 左邻居：${bearInfo.leftNeighbor
-                        ? `${bearInfo.leftNeighbor.seat}号`
-                        : '无'
-                        } ｜ 右邻居：${bearInfo.rightNeighbor
-                          ? `${bearInfo.rightNeighbor.seat}号`
-                          : '无'
-                        }`}
-                      en={`Bear: Seat ${bearInfo.bearPlayer.seat
-                        } | Left neighbor: ${bearInfo.leftNeighbor
-                          ? `Seat ${bearInfo.leftNeighbor.seat}`
-                          : 'None'
-                        } | Right neighbor: ${bearInfo.rightNeighbor
-                          ? `Seat ${bearInfo.rightNeighbor.seat}`
-                          : 'None'
-                        }`}
+                      zh={`熊：${bearInfo.bearPlayer.seat}号 ｜ 左邻居：${bearInfo.leftNeighbor ? `${bearInfo.leftNeighbor.seat}号` : '无'} ｜ 右邻居：${bearInfo.rightNeighbor ? `${bearInfo.rightNeighbor.seat}号` : '无'}`}
+                      en={`Bear: Seat ${bearInfo.bearPlayer.seat} | Left neighbor: ${bearInfo.leftNeighbor ? `Seat ${bearInfo.leftNeighbor.seat}` : 'None'} | Right neighbor: ${bearInfo.rightNeighbor ? `Seat ${bearInfo.rightNeighbor.seat}` : 'None'}`}
                       small
                     />
                   </div>
@@ -204,17 +147,13 @@ export default function DayResultScreen({
             )}
 
             {wolfBeautyLoverMessage && wolfBeautyLoverEnglish && (
-              <div style={styles.warningBox}>
-                <Bilingual
-                  zh={wolfBeautyLoverMessage}
-                  en={wolfBeautyLoverEnglish}
-                  small
-                />
+              <div className="p-3.5 rounded-xl bg-[var(--color-blood-dim)] border border-[var(--color-blood)] text-[var(--color-moon-bright)]">
+                <Bilingual zh={wolfBeautyLoverMessage} en={wolfBeautyLoverEnglish} small />
               </div>
             )}
 
             {canWhiteWolfKingExplode && (
-              <div style={styles.announcementBox}>
+              <div className="p-3.5 rounded-xl bg-[var(--color-wolf-surface)] border border-[var(--color-wolf-border-hi)] text-[var(--color-moon)]">
                 <Bilingual
                   zh="当前白狼王仍存活，可在进入投票前选择自爆并带走一名玩家。"
                   en="The White Wolf King is still alive and may explode before voting to take one player down."
@@ -226,30 +165,29 @@ export default function DayResultScreen({
         )}
       </div>
 
-      <div style={{ marginTop: 20 }}>
+      <div className="mt-5">
         <Bilingual zh="投票结果" en="Voting result" small />
       </div>
 
-      <div style={styles.summaryBox}>
-        <div>
-          <strong>结果：</strong>
+      <div className="mt-2 p-4 rounded-xl bg-[var(--color-wolf-surface)] border border-[var(--color-wolf-border)] flex flex-col gap-2.5 text-left">
+        <div className="text-[var(--color-moon-bright)] text-sm">
+          <strong className="text-[var(--color-moon-dim)]">结果：</strong>
           {voteSummary.message}
         </div>
 
         {unvotedPlayers.length > 0 && (
-          <div style={styles.unvotedBox}>
+          <div className="px-2.5 py-2 rounded-xl bg-[var(--color-amber-dim)] border border-[var(--color-amber-border)] text-[var(--color-amber-wolf)] text-xs">
             <strong>未投票：</strong>
-            {unvotedPlayers.map((player) => `${player.seat}号`).join('、')}
+            {unvotedPlayers.map((p) => `${p.seat}号`).join('、')}
           </div>
         )}
 
-        <div style={styles.voteChipList}>
+        <div className="flex flex-wrap gap-2">
           {Object.entries(voteSummary.tally).map(([id, count]) => {
             const player = players.find((p) => p.id === Number(id));
             if (!player) return null;
-
             return (
-              <div key={id} style={styles.voteChip}>
+              <div key={id} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-[var(--color-vote-bg)] border border-[var(--color-vote-border)] text-[var(--color-vote-text)] text-xs whitespace-nowrap">
                 <strong>{player.seat}号</strong>
                 <span>{count}票</span>
               </div>
@@ -258,13 +196,9 @@ export default function DayResultScreen({
         </div>
       </div>
 
-      <div style={styles.actionRow}>
+      <div className="flex flex-wrap gap-3 mt-5">
         <button
-          style={{
-            ...styles.secondaryButton,
-            opacity: canGoBack ? 1 : 0.5,
-            cursor: canGoBack ? 'pointer' : 'not-allowed',
-          }}
+          className={`px-4 py-3 rounded-xl font-bold text-sm border cursor-pointer transition-all ${canGoBack ? 'border-[var(--color-wolf-border-hi)] bg-[var(--color-wolf-card-alt)] text-[var(--color-moon)] hover:border-[var(--color-moon-dim)]' : 'border-[var(--color-wolf-border)] bg-transparent text-[var(--color-moon-dim)] cursor-not-allowed opacity-50'}`}
           disabled={!canGoBack}
           onClick={onBack}
         >
@@ -272,11 +206,7 @@ export default function DayResultScreen({
         </button>
 
         <button
-          style={{
-            ...styles.primaryButton,
-            opacity: canApplyNightDeaths ? 1 : 0.5,
-            cursor: canApplyNightDeaths ? 'pointer' : 'not-allowed',
-          }}
+          className={`px-4 py-3 rounded-xl font-bold text-sm border-none cursor-pointer transition-all ${canApplyNightDeaths ? 'bg-[var(--color-wolf-surface)] text-[var(--color-moon-bright)] border border-[var(--color-wolf-border-hi)] hover:border-[var(--color-moon-dim)]' : 'bg-[var(--color-wolf-card-alt)] text-[var(--color-moon-dim)] cursor-not-allowed opacity-50'}`}
           disabled={!canApplyNightDeaths}
           onClick={onApplyDayResult}
         >
@@ -284,11 +214,7 @@ export default function DayResultScreen({
         </button>
 
         <button
-          style={{
-            ...styles.voteButton,
-            opacity: canGoToVote ? 1 : 0.5,
-            cursor: canGoToVote ? 'pointer' : 'not-allowed',
-          }}
+          className={`px-4 py-3 rounded-xl font-bold text-sm border-none cursor-pointer transition-all ${canGoToVote ? 'bg-[#1d4ed8] text-white hover:brightness-110' : 'bg-[var(--color-wolf-card-alt)] text-[var(--color-moon-dim)] cursor-not-allowed opacity-50'}`}
           disabled={!canGoToVote}
           onClick={onGoToVote}
         >
@@ -296,82 +222,52 @@ export default function DayResultScreen({
         </button>
 
         <button
-          style={{
-            ...styles.nextNightButton,
-            opacity: canStartNextNight ? 1 : 0.5,
-            cursor: canStartNextNight ? 'pointer' : 'not-allowed',
-          }}
+          className={`px-4 py-3 rounded-xl font-bold text-sm border-none cursor-pointer transition-all ${canStartNextNight ? 'bg-[#166534] text-white hover:brightness-110' : 'bg-[var(--color-wolf-card-alt)] text-[var(--color-moon-dim)] cursor-not-allowed opacity-50'}`}
           disabled={!canStartNextNight}
           onClick={onStartNextNight}
         >
           <Bilingual zh="开始下一夜" en="Start next night" small />
         </button>
 
-        <button style={styles.dangerButton} onClick={onReset}>
+        <button
+          className="px-4 py-3 rounded-xl text-sm border-none bg-[var(--color-blood-dim)] text-[var(--color-moon)] cursor-pointer hover:bg-[var(--color-blood)] hover:text-white transition-all"
+          onClick={onReset}
+        >
           <Bilingual zh="重开本局" en="Restart game" small />
         </button>
       </div>
 
-      <div style={{ marginTop: 20 }}>
+      <div className="mt-5">
         <Bilingual zh="玩家状态" en="Player status" small />
 
-        <div style={styles.playerList}>
+        <div className="flex flex-col gap-2.5 mt-2.5">
           {players.map((player) => {
-            const isRevealedIdiot =
-              player.role === '白痴' && player.idiotRevealed;
-
+            const isRevealedIdiot = player.role === '白痴' && player.idiotRevealed;
             return (
-              <div key={player.id} style={styles.playerRow}>
-                <div style={styles.seatTag}>{player.seat}号</div>
-
-                <div style={styles.nameCell}>
-                  <Bilingual zh={player.name} en={player.name} small />
+              <div key={player.id} className="grid items-center gap-2.5 p-2.5 border border-[var(--color-wolf-border)] rounded-xl bg-[var(--color-wolf-surface)]" style={{ gridTemplateColumns: '48px minmax(60px,1fr) minmax(100px,1.2fr) auto' }}>
+                <div className="w-12 text-center bg-[var(--color-wolf-card-alt)] border border-[var(--color-wolf-border-hi)] text-[var(--color-moon-bright)] rounded-lg py-1.5 text-sm font-bold whitespace-nowrap box-border">
+                  {player.seat}号
                 </div>
 
-                <div
-                  style={{
-                    ...styles.roleCell,
-                    color: isRevealedIdiot ? '#dc2626' : '#111827',
-                    fontWeight: isRevealedIdiot ? 700 : 500,
-                  }}
-                >
-                  <div style={styles.roleLine}>
-                    <Bilingual
-                      zh={roleLabel(player)}
-                      en={roleToEnglish(player)}
-                      small
-                    />
+                <div className="min-w-0 text-sm text-[var(--color-moon)]">{player.name}</div>
 
-                    {canWhiteWolfKingExplode &&
-                      player.id === whiteWolfKingOwnerId &&
-                      player.alive && (
-                        <button
-                          style={{
-                            ...styles.explodeButton,
-                            opacity: gameOver ? 0.5 : 1,
-                            cursor: gameOver ? 'not-allowed' : 'pointer',
-                          }}
-                          disabled={gameOver}
-                          onClick={onStartWhiteWolfKingExplode}
-                        >
-                          <Bilingual zh="自爆" en="Explode" small />
-                        </button>
-                      )}
+                <div className={`min-w-0 text-sm ${isRevealedIdiot ? 'text-[var(--color-blood)] font-bold' : 'text-[var(--color-moon)]'}`}>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Bilingual zh={roleLabel(player)} en={roleToEnglish(player)} small />
+                    {canWhiteWolfKingExplode && player.id === whiteWolfKingOwnerId && player.alive && (
+                      <button
+                        className={`border-none bg-[var(--color-blood)] text-white px-2 py-1 rounded-lg cursor-pointer font-bold text-xs whitespace-nowrap flex-shrink-0 hover:brightness-110 ${gameOver ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        disabled={gameOver}
+                        onClick={onStartWhiteWolfKingExplode}
+                      >
+                        <Bilingual zh="自爆" en="Explode" small />
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                <div
-                  style={{
-                    ...styles.aliveBadge,
-                    background: player.alive ? '#dcfce7' : '#fee2e2',
-                    color: player.alive ? '#166534' : '#991b1b',
-                  }}
-                >
-                  <Bilingual
-                    zh={player.alive ? '存活' : '死亡'}
-                    en={player.alive ? 'Alive' : 'Dead'}
-                    small
-                  />
+                <div className={`px-2.5 py-1.5 rounded-full text-xs whitespace-nowrap flex-shrink-0 text-center border ${player.alive ? 'bg-[var(--color-alive-bg)] border-[var(--color-alive-border)] text-[var(--color-alive-text)]' : 'bg-[var(--color-dead-bg)] border-[var(--color-dead-border)] text-[var(--color-dead-text)]'}`}>
+                  <Bilingual zh={player.alive ? '存活' : '死亡'} en={player.alive ? 'Alive' : 'Dead'} small />
                 </div>
               </div>
             );
@@ -381,201 +277,3 @@ export default function DayResultScreen({
     </section>
   );
 }
-
-const styles: Record<string, CSSProperties> = {
-  card: {
-    background: '#ffffff',
-    borderRadius: 20,
-    padding: 20,
-    boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
-    marginBottom: 20,
-  },
-
-  announcementStack: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 12,
-    marginTop: 10,
-  },
-
-  announcementBox: {
-    padding: 16,
-    borderRadius: 16,
-    background: '#fef3c7',
-    color: '#92400e',
-    border: '1px solid #fcd34d',
-  },
-
-  announcementDetail: {
-    marginTop: 8,
-    opacity: 0.9,
-  },
-
-  summaryBox: {
-    marginTop: 16,
-    padding: 16,
-    borderRadius: 16,
-    background: '#f9fafb',
-    display: 'grid',
-    gap: 10,
-    textAlign: 'left',
-  },
-
-  unvotedBox: {
-    padding: '8px 10px',
-    borderRadius: 12,
-    background: '#fff7ed',
-    color: '#9a3412',
-    fontSize: 13,
-    border: '1px solid #fdba74',
-  },
-
-  voteChipList: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 4,
-  },
-
-  voteChip: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-    padding: '6px 10px',
-    borderRadius: 999,
-    background: '#eef2ff',
-    color: '#3730a3',
-    fontSize: 13,
-    whiteSpace: 'nowrap',
-  },
-
-  actionRow: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginTop: 20,
-  },
-
-  primaryButton: {
-    border: 'none',
-    background: '#111827',
-    color: '#fff',
-    padding: '12px 16px',
-    borderRadius: 14,
-    cursor: 'pointer',
-    fontWeight: 700,
-  },
-
-  voteButton: {
-    border: 'none',
-    background: '#2563eb',
-    color: '#fff',
-    padding: '12px 16px',
-    borderRadius: 14,
-    cursor: 'pointer',
-    fontWeight: 700,
-  },
-
-  nextNightButton: {
-    border: 'none',
-    background: '#16a34a',
-    color: '#fff',
-    padding: '12px 16px',
-    borderRadius: 14,
-    cursor: 'pointer',
-    fontWeight: 700,
-  },
-
-  secondaryButton: {
-    border: '1px solid #d1d5db',
-    background: '#ffffff',
-    color: '#111827',
-    padding: '12px 16px',
-    borderRadius: 14,
-    cursor: 'pointer',
-    fontWeight: 700,
-  },
-
-  dangerButton: {
-    border: 'none',
-    background: '#b91c1c',
-    color: '#fff',
-    padding: '12px 16px',
-    borderRadius: 14,
-    cursor: 'pointer',
-  },
-
-  playerList: {
-    marginTop: 10,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 10,
-  },
-
-  playerRow: {
-    display: 'grid',
-    gridTemplateColumns: '50px minmax(70px, 1fr) minmax(120px, 1.2fr) auto',
-    alignItems: 'center',
-    gap: 10,
-    padding: 10,
-    border: '1px solid #e5e7eb',
-    borderRadius: 12,
-  },
-
-  seatTag: {
-    width: 50,
-    textAlign: 'center',
-    background: '#111827',
-    color: '#fff',
-    borderRadius: 10,
-    padding: 6,
-    boxSizing: 'border-box',
-    whiteSpace: 'nowrap',
-  },
-
-  nameCell: {
-    minWidth: 0,
-  },
-
-  roleCell: {
-    minWidth: 0,
-  },
-
-  roleLine: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    flexWrap: 'wrap',
-  },
-
-  aliveBadge: {
-    padding: '6px 10px',
-    borderRadius: 999,
-    fontSize: 12,
-    whiteSpace: 'nowrap',
-    flexShrink: 0,
-    textAlign: 'center',
-  },
-
-  explodeButton: {
-    border: 'none',
-    background: '#b91c1c',
-    color: '#fff',
-    padding: '4px 8px',
-    borderRadius: 8,
-    cursor: 'pointer',
-    fontWeight: 700,
-    fontSize: 12,
-    whiteSpace: 'nowrap',
-    flexShrink: 0,
-  },
-
-  warningBox: {
-    marginTop: 16,
-    padding: 14,
-    borderRadius: 14,
-    background: '#fff7ed',
-    color: '#9a3412',
-    border: '1px solid #fdba74',
-  },
-};

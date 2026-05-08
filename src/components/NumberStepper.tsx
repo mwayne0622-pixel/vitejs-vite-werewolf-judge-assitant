@@ -25,58 +25,25 @@ export default function NumberStepper({
 }: Props) {
   return (
     <div>
-      <label
-        style={{
-          display: 'block',
-          marginBottom: 8,
-          color: '#111827',
-          fontWeight: 700,
-        }}
-      >
+      <label className="block mb-2">
         <Bilingual zh={labelZh} en={labelEn} small />
       </label>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div className="flex items-center gap-3">
         <button
-          style={{
-            width: 42,
-            height: 42,
-            borderRadius: 12,
-            border: '1px solid #d1d5db',
-            background: '#ffffff',
-            fontSize: 20,
-            cursor: 'pointer',
-          }}
+          className="w-10 h-10 rounded-xl border border-[var(--color-wolf-border-hi)] bg-[var(--color-wolf-card-alt)] text-[var(--color-moon)] text-xl cursor-pointer hover:border-[var(--color-blood)] hover:text-[var(--color-moon-bright)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           onClick={() => onChange(clamp(value - 1, min, max))}
           disabled={value <= min}
         >
           -
         </button>
 
-        <div
-          style={{
-            minWidth: 90,
-            textAlign: 'center',
-            padding: '10px 12px',
-            borderRadius: 12,
-            border: '1px solid #d1d5db',
-            background: '#f9fafb',
-            fontWeight: 700,
-          }}
-        >
+        <div className="min-w-[90px] text-center px-3 py-2.5 rounded-xl border border-[var(--color-wolf-border)] bg-[var(--color-wolf-surface)] text-[var(--color-moon-bright)] font-bold">
           {value} {unitZh}
         </div>
 
         <button
-          style={{
-            width: 42,
-            height: 42,
-            borderRadius: 12,
-            border: '1px solid #d1d5db',
-            background: '#ffffff',
-            fontSize: 20,
-            cursor: 'pointer',
-          }}
+          className="w-10 h-10 rounded-xl border border-[var(--color-wolf-border-hi)] bg-[var(--color-wolf-card-alt)] text-[var(--color-moon)] text-xl cursor-pointer hover:border-[var(--color-blood)] hover:text-[var(--color-moon-bright)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           onClick={() => onChange(clamp(value + 1, min, max))}
           disabled={value >= max}
         >
