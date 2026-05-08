@@ -68,7 +68,7 @@ function getSavedOnce(): Record<string, unknown> | null {
       _savedCache = null;
     }
   }
-  return _savedCache;
+  return _savedCache ?? null;
 }
 
 const defaultConfig: GameConfig = {
@@ -1540,4 +1540,3 @@ function getPhaseEnglish(phase: Phase) {
       return phase;
   }
 }
-

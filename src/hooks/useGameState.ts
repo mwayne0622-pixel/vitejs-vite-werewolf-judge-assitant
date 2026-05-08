@@ -22,7 +22,7 @@ function getSavedOnce(): Record<string, unknown> | null {
       _cached = null;
     }
   }
-  return _cached;
+  return _cached ?? null;
 }
 
 /**
