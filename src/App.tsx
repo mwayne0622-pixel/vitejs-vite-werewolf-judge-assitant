@@ -49,6 +49,12 @@ import {
 } from './utils/wolfBeautyLogic';
 
 import { isGod, isWolf, isVillager } from './utils/roleUtils';
+import {
+  createStandardRoleCommitHandler,
+  createWolvesCommitHandler,
+  createWhiteWolfKingCommitHandler,
+  createWolfBeautyCommitHandler,
+} from './roles/roleHandlers';
 
 const STORAGE_KEY = 'wolf-judge-assistant-vote-split-v2';
 
@@ -1018,242 +1024,85 @@ export default function App() {
     });
   }
 
-  function commitWolvesAndNext() {
-    setPlayers((prev) =>
-      prev.map((p): Player => {
-        if (selectedWolfIds.includes(p.id)) return { ...p, role: '狼人' };
-        if (p.role === '狼人') return { ...p, role: null };
-        return p;
-      })
-    );
-    setPhase(getNextFirstNightPhase(config, 'first-night-wolf'));
-  }
+  const commitWolvesAndNext = createWolvesCommitHandler(
+    selectedWolfIds,
+    wolfTargetId,
+    config,
+    players,
+    { setPlayers, setSelectedWolfIds, setPhase }
+  );
 
-  function commitWhiteWolfKingAndNext() {
-    if (draftWhiteWolfKingOwnerId === null) return;
+  const commitWhiteWolfKingAndNext = createWhiteWolfKingCommitHandler(
+    selectedWolfIds,
+    draftWhiteWolfKingOwnerId,
+    config,
+    players,
+    { setPlayers, setWhiteWolfKingOwnerId, setPhase, setFirstNightDone }
+  );
 
-    const nextPhase = getNextFirstNightPhase(config, 'first-night-white-wolf-king');
-
-    const nextPlayers: Player[] = players.map((p): Player => {
-      if (!selectedWolfIds.includes(p.id)) return p;
-
-      return {
-        ...p,
-        role: p.id === draftWhiteWolfKingOwnerId ? '白狼王' : '狼人',
-      };
-    });
-
-    if (nextPhase === 'day-result') {
-      setPlayers(finalizeUnassignedVillagers(nextPlayers));
-      setWhiteWolfKingOwnerId(draftWhiteWolfKingOwnerId);
-      setFirstNightDone(true);
-      setPhase('day-result');
-      return;
+  const commitWolfBeautyAndNext = createWolfBeautyCommitHandler(
+    selectedWolfIds,
+    draftWhiteWolfKingOwnerId,
+    draftWolfBeautyOwnerId,
+    wolfBeautyCharmTargetId,
+    config,
+    players,
+    {
+      setPlayers,
+      setWolfBeautyOwnerId,
+      setLastWolfBeautyCharmTargetId,
+      setPhase,
+      setFirstNightDone,
     }
+  );
 
-    setPlayers(nextPlayers);
-    setWhiteWolfKingOwnerId(draftWhiteWolfKingOwnerId);
-    setPhase(nextPhase);
-  }
+  const commitSeerAndNext = createStandardRoleCommitHandler(
+    '预言家',
+    draftSeerOwnerId,
+    config,
+    players,
+    { setPlayers, setRoleOwnerId: setSeerOwnerId, setDraftRoleOwnerId: setDraftSeerOwnerId, setPhase, setFirstNightDone }
+  );
 
-  function commitWolfBeautyAndNext() {
-    if (draftWolfBeautyOwnerId === null) return;
+  const commitWitchAndNext = createStandardRoleCommitHandler(
+    '女巫',
+    draftWitchOwnerId,
+    config,
+    players,
+    { setPlayers, setRoleOwnerId: setWitchOwnerId, setDraftRoleOwnerId: setDraftWitchOwnerId, setPhase, setFirstNightDone }
+  );
 
-    const nextPhase = getNextFirstNightPhase(config, 'first-night-wolf-beauty');
+  const commitGuardAndNext = createStandardRoleCommitHandler(
+    '守卫',
+    draftGuardOwnerId,
+    config,
+    players,
+    { setPlayers, setRoleOwnerId: setGuardOwnerId, setDraftRoleOwnerId: setDraftGuardOwnerId, setPhase, setFirstNightDone }
+  );
 
-    const nextPlayers: Player[] = players.map((p): Player => {
-      if (!selectedWolfIds.includes(p.id)) return p;
+  const commitHunterAndNext = createStandardRoleCommitHandler(
+    '猎人',
+    draftHunterOwnerId,
+    config,
+    players,
+    { setPlayers, setRoleOwnerId: setHunterOwnerId, setDraftRoleOwnerId: setDraftHunterOwnerId, setPhase, setFirstNightDone }
+  );
 
-      if (p.id === draftWolfBeautyOwnerId) {
-        return { ...p, role: '狼美人' };
-      }
+  const commitIdiotAndNext = createStandardRoleCommitHandler(
+    '白痴',
+    draftIdiotOwnerId,
+    config,
+    players,
+    { setPlayers, setRoleOwnerId: setIdiotOwnerId, setDraftRoleOwnerId: setDraftIdiotOwnerId, setPhase, setFirstNightDone }
+  );
 
-      if (p.id === draftWhiteWolfKingOwnerId) {
-        return { ...p, role: '白狼王' };
-      }
-
-      return { ...p, role: '狼人' };
-    });
-
-    if (nextPhase === 'day-result') {
-      setPlayers(finalizeUnassignedVillagers(nextPlayers));
-      setWolfBeautyOwnerId(draftWolfBeautyOwnerId);
-      setLastWolfBeautyCharmTargetId(wolfBeautyCharmTargetId);
-      setFirstNightDone(true);
-      setPhase('day-result');
-      return;
-    }
-
-    setPlayers(nextPlayers);
-    setWolfBeautyOwnerId(draftWolfBeautyOwnerId);
-    setLastWolfBeautyCharmTargetId(wolfBeautyCharmTargetId);
-    setPhase(nextPhase);
-  }
-
-  function commitSeerAndNext() {
-    if (draftSeerOwnerId === null) return;
-
-    const nextPhase = getNextFirstNightPhase(config, 'first-night-seer');
-    const nextPlayers: Player[] = players.map((p): Player => {
-      if (p.role === '预言家' && p.id !== draftSeerOwnerId) {
-        return { ...p, role: null };
-      }
-      if (p.id === draftSeerOwnerId) {
-        return { ...p, role: '预言家' };
-      }
-      return p;
-    });
-
-    if (nextPhase === 'day-result') {
-      setPlayers(finalizeUnassignedVillagers(nextPlayers));
-      setSeerOwnerId(draftSeerOwnerId);
-      setFirstNightDone(true);
-      setPhase('day-result');
-      return;
-    }
-
-    setPlayers(nextPlayers);
-    setSeerOwnerId(draftSeerOwnerId);
-    setPhase(nextPhase);
-  }
-
-  function commitWitchAndNext() {
-    if (draftWitchOwnerId === null) return;
-
-    const nextPhase = getNextFirstNightPhase(config, 'first-night-witch');
-    const nextPlayers: Player[] = players.map((p): Player => {
-      if (p.role === '女巫' && p.id !== draftWitchOwnerId) {
-        return { ...p, role: null };
-      }
-      if (p.id === draftWitchOwnerId) {
-        return { ...p, role: '女巫' };
-      }
-      return p;
-    });
-
-    if (nextPhase === 'day-result') {
-      setPlayers(finalizeUnassignedVillagers(nextPlayers));
-      setWitchOwnerId(draftWitchOwnerId);
-      setFirstNightDone(true);
-      setPhase('day-result');
-      return;
-    }
-
-    setPlayers(nextPlayers);
-    setWitchOwnerId(draftWitchOwnerId);
-    setPhase(nextPhase);
-  }
-
-  function commitGuardAndNext() {
-    if (draftGuardOwnerId === null) return;
-
-    const nextPhase = getNextFirstNightPhase(config, 'first-night-guard');
-    const nextPlayers: Player[] = players.map((p): Player => {
-      if (p.role === '守卫' && p.id !== draftGuardOwnerId) {
-        return { ...p, role: null };
-      }
-      if (p.id === draftGuardOwnerId) {
-        return { ...p, role: '守卫' };
-      }
-      return p;
-    });
-
-    if (nextPhase === 'day-result') {
-      setPlayers(finalizeUnassignedVillagers(nextPlayers));
-      setGuardOwnerId(draftGuardOwnerId);
-      setFirstNightDone(true);
-      setPhase('day-result');
-      return;
-    }
-
-    setPlayers(nextPlayers);
-    setGuardOwnerId(draftGuardOwnerId);
-    setPhase(nextPhase);
-  }
-
-  function commitHunterAndNext() {
-    if (draftHunterOwnerId === null) return;
-
-    const nextPhase = getNextFirstNightPhase(config, 'first-night-hunter');
-
-    const nextPlayers: Player[] = players.map((p): Player => {
-      if (p.role === '猎人' && p.id !== draftHunterOwnerId) {
-        return { ...p, role: null };
-      }
-      if (p.id === draftHunterOwnerId) {
-        return { ...p, role: '猎人' };
-      }
-      return p;
-    });
-
-    if (nextPhase === 'day-result') {
-      setPlayers(finalizeUnassignedVillagers(nextPlayers));
-      setHunterOwnerId(draftHunterOwnerId);
-      setFirstNightDone(true);
-      setPhase('day-result');
-      return;
-    }
-
-    setPlayers(nextPlayers);
-    setHunterOwnerId(draftHunterOwnerId);
-    setPhase(nextPhase);
-  }
-
-  function commitIdiotAndNext() {
-    if (draftIdiotOwnerId === null) return;
-
-    const nextPhase = getNextFirstNightPhase(config, 'first-night-idiot');
-
-    const nextPlayers: Player[] = players.map((p): Player => {
-      if (p.role === '白痴' && p.id !== draftIdiotOwnerId) {
-        return { ...p, role: null };
-      }
-      if (p.id === draftIdiotOwnerId) {
-        return { ...p, role: '白痴' };
-      }
-      return p;
-    });
-
-    if (nextPhase === 'day-result') {
-      setPlayers(finalizeUnassignedVillagers(nextPlayers));
-      setIdiotOwnerId(draftIdiotOwnerId);
-      setFirstNightDone(true);
-      setPhase('day-result');
-      return;
-    }
-
-    setPlayers(nextPlayers);
-    setIdiotOwnerId(draftIdiotOwnerId);
-    setPhase(nextPhase);
-  }
-
-  function commitBearAndNext() {
-    if (draftBearOwnerId === null) return;
-
-    const nextPhase = getNextFirstNightPhase(config, 'first-night-bear');
-
-    const nextPlayers: Player[] = players.map((p): Player => {
-      if (p.role === '熊' && p.id !== draftBearOwnerId) {
-        return { ...p, role: null };
-      }
-      if (p.id === draftBearOwnerId) {
-        return { ...p, role: '熊' };
-      }
-      return p;
-    });
-
-    if (nextPhase === 'day-result') {
-      setPlayers(finalizeUnassignedVillagers(nextPlayers));
-      setBearOwnerId(draftBearOwnerId);
-      setFirstNightDone(true);
-      setPhase('day-result');
-      return;
-    }
-
-    setPlayers(nextPlayers);
-    setBearOwnerId(draftBearOwnerId);
-    setPhase(nextPhase);
-  }
+  const commitBearAndNext = createStandardRoleCommitHandler(
+    '熊',
+    draftBearOwnerId,
+    config,
+    players,
+    { setPlayers, setRoleOwnerId: setBearOwnerId, setDraftRoleOwnerId: setDraftBearOwnerId, setPhase, setFirstNightDone }
+  );
 
   function startWhiteWolfKingExplode() {
     if (!canWhiteWolfKingExplode || whiteWolfKingPlayer === null) return;
