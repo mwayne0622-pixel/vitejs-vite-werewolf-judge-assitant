@@ -10,6 +10,8 @@ type Props = {
   label?: string;
   sublabel?: string;
   disabledNote?: string;
+  showWolfClawOnSelected?: boolean;
+  nightCompactRole?: boolean;
 };
 
 export default function PlayerSelectButton({
@@ -21,9 +23,12 @@ export default function PlayerSelectButton({
   label,
   sublabel,
   disabledNote,
+  showWolfClawOnSelected = false,
+  nightCompactRole = false,
 }: Props) {
   const faction = showRole ? getRoleFaction(player.role) : 'unknown';
   const factionCls = getFactionClasses(faction);
+  const roleText = showRole && player.role ? `${getRoleIcon(player.role)} ${player.role}` : '';
 
   return (
     <button
@@ -51,19 +56,39 @@ export default function PlayerSelectButton({
 
       {/* Content */}
       <span className="flex flex-col min-w-0">
-        <span className="text-sm font-semibold leading-tight truncate">
-          {label ?? player.name}
-        </span>
+        {!nightCompactRole && (
+          <span className="text-sm font-semibold leading-tight truncate">
+            {label ?? player.name}
+          </span>
+        )}
         {(showRole || sublabel || disabledNote) && (
-          <span className={`text-[11px] leading-tight mt-0.5 truncate ${selected ? 'text-white/70' : 'opacity-60'}`}>
+          <span
+            className={[
+              nightCompactRole
+                ? 'text-base font-bold leading-tight'
+                : 'text-[11px] leading-tight mt-0.5 truncate',
+              selected ? 'text-white/90' : 'opacity-70',
+            ].join(' ')}
+          >
             {disabledNote
               ? disabledNote
               : showRole && player.role
-                ? `${getRoleIcon(player.role)} ${player.role}`
+                ? roleText
                 : sublabel ?? ''}
           </span>
         )}
       </span>
+
+      {showWolfClawOnSelected && selected && (
+        <span
+          aria-hidden="true"
+          className="absolute inset-0 pointer-events-none flex items-center justify-center"
+        >
+          <span className="text-[34px] leading-none rotate-[-18deg] drop-shadow-[0_0_8px_rgba(127,29,29,0.95)]">
+            🔪
+          </span>
+        </span>
+      )}
     </button>
   );
 }

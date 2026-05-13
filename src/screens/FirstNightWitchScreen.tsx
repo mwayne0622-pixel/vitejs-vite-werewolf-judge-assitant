@@ -1,4 +1,6 @@
 import Bilingual from '../components/Bilingual';
+import JudgeScriptHeader from '../components/JudgeScriptHeader';
+import JudgeScriptLines from '../components/JudgeScriptLines';
 import type { Player } from '../types';
 import PlayerSelectButton from '../components/PlayerSelectButton';
 
@@ -21,7 +23,7 @@ type Props = {
 };
 
 export default function FirstNightWitchScreen({
-  players,
+  players: _players,
   draftWitchOwnerId,
   wolfTarget,
   witchSave,
@@ -37,30 +39,46 @@ export default function FirstNightWitchScreen({
   onBack,
   onNext,
 }: Props) {
-  const selectedWitch = players.find((p) => p.id === draftWitchOwnerId) ?? null;
   const saveDisabled = witchSaveUsed || witchPoisonId !== null;
   const poisonDisabled = witchPoisonUsed || witchSave;
+  const tonightTargetText = wolfTarget ? `${wolfTarget.seat}号` : '未选择';
+
+  function speakWitchLine(text: string) {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = 0.95;
+    utterance.pitch = 1.02;
+    utterance.volume = 1;
+
+    const voices = window.speechSynthesis.getVoices();
+    const zhVoice = voices.find((voice) => voice.lang.toLowerCase().startsWith('zh'));
+    if (zhVoice) utterance.voice = zhVoice;
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function handleSelectWitch(playerId: number) {
+    onSelectWitch(playerId);
+    speakWitchLine('女巫到场，解药毒药都在我手里，今晚谁都别想轻松过关。');
+  }
 
   return (
     <section className="bg-[var(--color-wolf-card)] rounded-2xl p-5 mb-5 shadow-[var(--shadow-card)] border border-[var(--color-wolf-border)]">
-      <Bilingual zh="4. 第一夜：女巫" en="First night: Witch" />
-
       <div className="mt-3.5 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
-        <div className="text-xs font-bold text-[#818cf8] mb-2">
-          <Bilingual zh="法官宣读" en="Judge script" small />
-        </div>
+        <JudgeScriptHeader />
         <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
-          <Bilingual
-            zh={<>女巫请睁眼。<br />请确认你的身份。<br /><br />今晚是否使用解药？<br /><br />今晚是否使用毒药？<br />请选择一名玩家。</>}
-            en={<>Witch, please open your eyes.<br />Confirm your identity.<br /><br />Do you want to use the antidote tonight?<br /><br />Do you want to use poison tonight?<br />Choose one player.</>}
+          <JudgeScriptLines
+            lines={[
+              { zh: '女巫请睁眼。', en: 'Witch, please open your eyes.' },
+            ]}
           />
         </div>
       </div>
 
       <div className="mt-4">
-        <div className="text-[var(--color-moon-dim)] text-xs mb-2">
-          <Bilingual zh="先选中谁是女巫，点击下一步后才保存" en="Choose the witch first. It is saved only when you click Next." small />
-        </div>
         <div className="flex flex-wrap gap-2">
           {selectablePlayers.map((player) => {
             const selected = draftWitchOwnerId === player.id;
@@ -69,27 +87,35 @@ export default function FirstNightWitchScreen({
                 key={player.id}
                 player={player}
                 selected={selected}
-                onClick={() => onSelectWitch(player.id)}
+                onClick={() => handleSelectWitch(player.id)}
               />
             );
           })}
-        </div>
-        <div className="mt-2 text-xs text-[var(--color-moon-dim)]">
-          <Bilingual
-            zh={`已选女巫：${selectedWitch ? `${selectedWitch.seat}号` : '无'}`}
-            en={`Selected witch: ${selectedWitch ? `Seat ${selectedWitch.seat}` : 'None'}`}
-            small
-          />
         </div>
       </div>
 
       {!witchSaveUsed ? (
         <div className="mt-4 p-3.5 rounded-xl bg-[#0c1a2e] border border-[#1e3a5f] text-[#93c5fd] text-xs">
-          <Bilingual
-            zh={<>今晚刀口：{wolfTarget ? `${wolfTarget.seat}号` : '未选择'}<br /><span className="text-[var(--color-amber-wolf)] font-bold">仅手势提示，勿读出声。</span></>}
-            en={<>Tonight&apos;s target: {wolfTarget ? `Seat ${wolfTarget.seat}` : 'not selected'}<br /><span className="text-[var(--color-amber-wolf)] font-bold">Gesture only. Do not say aloud.</span></>}
-            small
-          />
+          <div className="flex items-center gap-2">
+            <span className="text-[var(--color-moon-bright)] font-semibold">今晚刀口</span>
+            <button
+              type="button"
+              className="px-1.5 py-0.5 rounded-md border border-[#6366f1] text-xs text-[#a5b4fc] hover:bg-[#312e81] transition-colors"
+              onClick={() => speakWitchLine('今晚刀口')}
+              aria-label="朗读：今晚刀口"
+              title="朗读今晚刀口"
+            >
+              🔊
+            </button>
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-xl leading-none" aria-label="静音提示" title="静音提示">
+              🔇
+            </span>
+            <span className="inline-flex items-center px-3 py-1.5 rounded-full border border-[#60a5fa] bg-[#172554] text-[#bfdbfe] font-black text-base tracking-wide shadow-[0_0_12px_rgba(96,165,250,0.35)]">
+              {tonightTargetText}
+            </span>
+          </div>
         </div>
       ) : (
         <div className="mt-4 p-3.5 rounded-xl bg-[var(--color-wolf-surface)] border border-[var(--color-wolf-border)] text-[var(--color-moon-dim)] text-xs">
@@ -101,16 +127,56 @@ export default function FirstNightWitchScreen({
         </div>
       )}
 
-      <label className={`flex items-center gap-2.5 mt-4 cursor-pointer transition-opacity ${saveDisabled ? 'opacity-50' : ''}`}>
-        <input type="checkbox" className="w-4 h-4 accent-[var(--color-blood)]" checked={witchSave} disabled={saveDisabled} onChange={(e) => onToggleSave(e.target.checked)} />
-        <span className="text-sm text-[var(--color-moon)]">
+      <div className="mt-4 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
+        <JudgeScriptHeader />
+        <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
+          <JudgeScriptLines
+            lines={[
+              { zh: '你有一瓶解药，今晚是否使用？', en: 'You have one antidote. Will you use it tonight?' },
+            ]}
+          />
+        </div>
+      </div>
+
+      <div className={`mt-4 transition-opacity ${saveDisabled ? 'opacity-50' : ''}`}>
+        <div className="text-[var(--color-moon-dim)] text-xs mb-2">
           <Bilingual
             zh={`使用解药救人${witchSaveUsed ? '（本局已用完）' : witchPoisonId !== null ? '（已选择毒药，不能同时使用）' : ''}`}
             en={`Use antidote to save${witchSaveUsed ? ' (already used in this game)' : witchPoisonId !== null ? ' (poison selected, cannot use both)' : ''}`}
             small
           />
-        </span>
-      </label>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={saveDisabled}
+            className={`px-3.5 py-2.5 rounded-xl text-sm font-semibold border transition-all ${witchSave ? 'bg-[var(--color-blood)] border-[var(--color-blood)] text-white' : 'bg-[var(--color-wolf-card-alt)] border-[var(--color-wolf-border-hi)] text-[var(--color-moon)]'} ${saveDisabled ? 'cursor-not-allowed' : 'cursor-pointer hover:border-[var(--color-blood)]'}`}
+            onClick={() => onToggleSave(true)}
+          >
+            <Bilingual zh="使用解药" en="Use antidote" small />
+          </button>
+          <button
+            type="button"
+            disabled={saveDisabled}
+            className={`px-3.5 py-2.5 rounded-xl text-sm font-semibold border transition-all ${!witchSave ? 'bg-[var(--color-blood)] border-[var(--color-blood)] text-white' : 'bg-[var(--color-wolf-card-alt)] border-[var(--color-wolf-border-hi)] text-[var(--color-moon)]'} ${saveDisabled ? 'cursor-not-allowed' : 'cursor-pointer hover:border-[var(--color-blood)]'}`}
+            onClick={() => onToggleSave(false)}
+          >
+            <Bilingual zh="不使用解药" en="Do not use antidote" small />
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-4 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
+        <JudgeScriptHeader />
+        <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
+          <JudgeScriptLines
+            lines={[
+              { zh: '你有一瓶毒药，今晚是否使用？', en: 'You have one poison. Will you use it tonight?' },
+              { zh: '你要毒谁？', en: 'Who do you want to poison?' },
+            ]}
+          />
+        </div>
+      </div>
 
       <div className={`mt-5 transition-opacity ${poisonDisabled ? 'opacity-50' : ''}`}>
         <div className="text-[var(--color-moon-dim)] text-xs mb-2">

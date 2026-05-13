@@ -1,4 +1,6 @@
 import Bilingual from '../components/Bilingual';
+import JudgeScriptHeader from '../components/JudgeScriptHeader';
+import JudgeScriptLines from '../components/JudgeScriptLines';
 import type { Player } from '../types';
 import PlayerSelectButton from '../components/PlayerSelectButton';
 
@@ -16,7 +18,7 @@ type Props = {
 };
 
 export default function FirstNightGuardScreen({
-  players,
+  players: _players,
   draftGuardOwnerId,
   guardTargetId,
   selectablePlayers,
@@ -27,28 +29,42 @@ export default function FirstNightGuardScreen({
   onBack,
   onNext,
 }: Props) {
-  const selectedGuard = draftGuardOwnerId !== null ? players.find((p) => p.id === draftGuardOwnerId) ?? null : null;
+  function speakGuardLine(text: string) {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = 0.95;
+    utterance.pitch = 0.96;
+    utterance.volume = 1;
+
+    const voices = window.speechSynthesis.getVoices();
+    const zhVoice = voices.find((voice) => voice.lang.toLowerCase().startsWith('zh'));
+    if (zhVoice) utterance.voice = zhVoice;
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function handleSelectGuard(playerId: number) {
+    onSelectGuard(playerId);
+    speakGuardLine('守卫已就位，今夜我站岗，狼人先排队。');
+  }
 
   return (
     <section className="bg-[var(--color-wolf-card)] rounded-2xl p-5 mb-5 shadow-[var(--shadow-card)] border border-[var(--color-wolf-border)]">
-      <Bilingual zh="5. 第一夜：守卫" en="First night: Guard" />
-
       <div className="mt-3.5 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
-        <div className="text-xs font-bold text-[#818cf8] mb-2">
-          <Bilingual zh="法官宣读" en="Judge script" small />
-        </div>
+        <JudgeScriptHeader />
         <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
-          <Bilingual
-            zh={<>守卫请睁眼。<br />请确认你的身份。<br />请选择今晚你要守护的玩家。</>}
-            en={<>Guard, please open your eyes.<br />Confirm your identity.<br />Choose the player you want to guard tonight.</>}
+          <JudgeScriptLines
+            lines={[
+              { zh: '守卫请睁眼。', en: 'Guard, please open your eyes.' },
+            ]}
           />
         </div>
       </div>
 
       <div className="mt-4">
-        <div className="text-[var(--color-moon-dim)] text-xs mb-2">
-          <Bilingual zh="先选中谁是守卫，点击下一步后才保存" en="Choose the guard first. It is saved only when you click Next." small />
-        </div>
         <div className="flex flex-wrap gap-2">
           {selectablePlayers.map((player) => {
             const selected = draftGuardOwnerId === player.id;
@@ -57,23 +73,23 @@ export default function FirstNightGuardScreen({
                 key={player.id}
                 player={player}
                 selected={selected}
-                onClick={() => onSelectGuard(player.id)}
+                onClick={() => handleSelectGuard(player.id)}
               />
             );
           })}
         </div>
-        <div className="mt-2 text-xs text-[var(--color-moon-dim)]">
-          <Bilingual
-            zh={`已选守卫：${selectedGuard ? `${selectedGuard.seat}号` : '无'}`}
-            en={`Selected guard: ${selectedGuard ? `Seat ${selectedGuard.seat}` : 'None'}`}
-            small
-          />
-        </div>
       </div>
 
       <div className="mt-5">
-        <div className="text-[var(--color-moon-dim)] text-xs mb-2">
-          <Bilingual zh="选择守护目标" en="Choose a player to guard" small />
+        <div className="mt-3.5 mb-5 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
+          <JudgeScriptHeader />
+          <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
+            <JudgeScriptLines
+              lines={[
+                { zh: '请选择今晚你要守护的玩家。', en: 'Choose the player you want to guard tonight.' },
+              ]}
+            />
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           {alivePlayers.map((player) => {

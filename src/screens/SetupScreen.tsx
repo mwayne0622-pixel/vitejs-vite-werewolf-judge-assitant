@@ -63,6 +63,36 @@ export default function SetupScreen({
     <section className="bg-[var(--color-wolf-card)] rounded-2xl p-5 mb-5 shadow-[var(--shadow-card)] border border-[var(--color-wolf-border)]">
       <Bilingual zh="1. 开局设置" en="Game setup" />
 
+      <div className="mt-4 p-4 rounded-2xl bg-[var(--color-wolf-surface)] border border-[var(--color-wolf-border)]">
+        <div className="grid grid-cols-5 gap-2">
+          {[
+            { label: '狼人', value: config.wolfCount },
+            { label: '神职', value: includedGodCount },
+            { label: '村民', value: config.villagerCount },
+            { label: '总人数', value: playerCount },
+            { label: '状态', value: configValid ? '✓ 可开始' : '需调整' },
+          ].map(({ label, value }) => (
+            <div key={label} className="flex flex-col items-center gap-1 p-2.5 rounded-xl bg-[var(--color-wolf-card)] border border-[var(--color-wolf-border)]">
+              <strong className="text-[var(--color-moon-dim)] text-xs">{label}</strong>
+              <span className="text-[var(--color-moon-bright)] font-bold text-sm">{value}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-2 mt-3">
+          {[
+            { label: `熊：${config.hasBear ? '开启' : '关闭'}`, on: config.hasBear },
+            { label: `白痴：${config.hasIdiot ? '开启' : '关闭'}`, on: config.hasIdiot },
+            { label: `白狼王：${config.hasWhiteWolfKing ? '开启' : '关闭'}`, on: config.hasWhiteWolfKing },
+            { label: `狼美人：${config.hasWolfBeauty ? '开启' : '关闭'}`, on: config.hasWolfBeauty },
+          ].map(({ label, on }) => (
+            <span key={label} className={`px-2.5 py-1 rounded-full text-xs border ${on ? 'border-[var(--color-blood)] text-[var(--color-moon-bright)]' : 'border-[var(--color-wolf-border)] text-[var(--color-moon-dim)]'}`}>
+              {label}
+            </span>
+          ))}
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 gap-3 mt-4">
         <NumberStepper
           labelZh="狼人数量"
@@ -111,44 +141,6 @@ export default function SetupScreen({
             <CheckboxCard checked={config.hasWhiteWolfKing} onChange={(v) => onUpdateConfig({ hasWhiteWolfKing: v })} zh="白狼王" en="White Wolf King" />
             <CheckboxCard checked={config.hasWolfBeauty} onChange={(v) => onUpdateConfig({ hasWolfBeauty: v })} zh="狼美人" en="Wolf Beauty" />
           </div>
-        </div>
-      </div>
-
-      <div className="mt-4 p-3.5 rounded-xl bg-[var(--color-wolf-surface)] border border-[var(--color-wolf-border)] text-[var(--color-moon-dim)] text-xs leading-relaxed">
-        <Bilingual
-          zh={<>请设置狼人数量、村民数量，以及加入的角色。<br />系统会自动计算总人数。<br />公式：总人数 = 狼人 + 神职 + 村民<br />白狼王和狼美人属于狼人阵营，占用一个狼位，不额外增加总人数。</>}
-          en={<>Set the number of wolves, villagers, and special roles.<br />The total player count is calculated automatically.<br />Formula: total = wolves + special roles + villagers<br />The White Wolf King and Wolf Beauty occupy wolf slots, not extra seats.</>}
-          small
-        />
-      </div>
-
-      <div className="mt-4 p-4 rounded-2xl bg-[var(--color-wolf-surface)] border border-[var(--color-wolf-border)]">
-        <div className="grid grid-cols-5 gap-2">
-          {[
-            { label: '狼人', value: config.wolfCount },
-            { label: '神职', value: includedGodCount },
-            { label: '村民', value: config.villagerCount },
-            { label: '总人数', value: playerCount },
-            { label: '状态', value: configValid ? '✓ 可开始' : '需调整' },
-          ].map(({ label, value }) => (
-            <div key={label} className="flex flex-col items-center gap-1 p-2.5 rounded-xl bg-[var(--color-wolf-card)] border border-[var(--color-wolf-border)]">
-              <strong className="text-[var(--color-moon-dim)] text-xs">{label}</strong>
-              <span className="text-[var(--color-moon-bright)] font-bold text-sm">{value}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap gap-2 mt-3">
-          {[
-            { label: `熊：${config.hasBear ? '开启' : '关闭'}`, on: config.hasBear },
-            { label: `白痴：${config.hasIdiot ? '开启' : '关闭'}`, on: config.hasIdiot },
-            { label: `白狼王：${config.hasWhiteWolfKing ? '开启' : '关闭'}`, on: config.hasWhiteWolfKing },
-            { label: `狼美人：${config.hasWolfBeauty ? '开启' : '关闭'}`, on: config.hasWolfBeauty },
-          ].map(({ label, on }) => (
-            <span key={label} className={`px-2.5 py-1 rounded-full text-xs border ${on ? 'border-[var(--color-blood)] text-[var(--color-moon-bright)]' : 'border-[var(--color-wolf-border)] text-[var(--color-moon-dim)]'}`}>
-              {label}
-            </span>
-          ))}
         </div>
       </div>
 

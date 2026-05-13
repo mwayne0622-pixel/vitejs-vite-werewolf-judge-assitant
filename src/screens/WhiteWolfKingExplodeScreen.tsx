@@ -20,24 +20,48 @@ export default function WhiteWolfKingExplodeScreen({
   onConfirm,
 }: Props) {
   const canConfirm = selectedTargetId !== null;
+  const explodeLine = `白狼王 ${whiteWolfKingPlayer.seat}号 已选择自爆，请选择一名玩家与其同归于尽。`;
+
+  function speakChinese(text: string) {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = 0.95;
+    utterance.pitch = 0.95;
+    utterance.volume = 1;
+
+    const voices = window.speechSynthesis.getVoices();
+    const zhVoice = voices.find((voice) => voice.lang.toLowerCase().startsWith('zh'));
+    if (zhVoice) utterance.voice = zhVoice;
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  }
 
   return (
     <section className="bg-[var(--color-wolf-card)] rounded-2xl p-5 mb-5 shadow-[var(--shadow-card)] border border-[var(--color-wolf-border)]">
-      <Bilingual zh="白狼王自爆" en="White Wolf King Explode" />
-
       <div className="mt-4 p-3.5 rounded-xl bg-[var(--color-blood-dim)] border border-[var(--color-blood)] text-[var(--color-moon-bright)] text-xs">
-        <Bilingual
-          zh={`白狼王 ${whiteWolfKingPlayer.seat}号 已选择自爆，请选择一名玩家与其同归于尽。`}
-          en={`White Wolf King (Seat ${whiteWolfKingPlayer.seat}) has chosen to explode. Select one player to take down.`}
-          small
-        />
+        <div className="flex items-center gap-2">
+          <Bilingual
+            zh={explodeLine}
+            en={`White Wolf King (Seat ${whiteWolfKingPlayer.seat}) has chosen to explode. Select one player to take down.`}
+            small
+          />
+          <button
+            type="button"
+            className="px-1.5 py-0.5 rounded-md border border-[var(--color-blood)] text-xs text-[var(--color-moon-bright)] hover:bg-[#7f1d1d] transition-colors"
+            onClick={() => speakChinese(explodeLine)}
+            aria-label={`朗读：${explodeLine}`}
+            title="朗读"
+          >
+            🔊
+          </button>
+        </div>
       </div>
 
       <div className="mt-4">
-        <div className="text-[var(--color-moon-dim)] text-xs mb-3">
-          <Bilingual zh="可选目标" en="Selectable targets" small />
-        </div>
-        <div className="grid gap-2.5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))' }}>
+        <div className="flex flex-wrap gap-2">
           {targets.map((player) => {
             const selected = selectedTargetId === player.id;
             return (
@@ -45,6 +69,8 @@ export default function WhiteWolfKingExplodeScreen({
                 key={player.id}
                 player={player}
                 selected={selected}
+                showRole
+                nightCompactRole
                 onClick={() => onSelectTarget(player.id)}
               />
             );
@@ -54,11 +80,22 @@ export default function WhiteWolfKingExplodeScreen({
 
       {canConfirm && (
         <div className="mt-4 p-3.5 rounded-xl bg-[var(--color-amber-dim)] border border-[var(--color-amber-border)] text-[var(--color-amber-wolf)] text-xs">
-          <Bilingual
-            zh={`确认：白狼王将与 ${targets.find((p) => p.id === selectedTargetId)?.seat}号 同归于尽`}
-            en={`Confirm: White Wolf King will take Seat ${targets.find((p) => p.id === selectedTargetId)?.seat} down`}
-            small
-          />
+          <div className="flex items-center gap-2">
+            <Bilingual
+              zh={`确认：白狼王将与 ${targets.find((p) => p.id === selectedTargetId)?.seat}号 同归于尽`}
+              en={`Confirm: White Wolf King will take Seat ${targets.find((p) => p.id === selectedTargetId)?.seat} down`}
+              small
+            />
+            <button
+              type="button"
+              className="px-1.5 py-0.5 rounded-md border border-[var(--color-amber-border)] text-xs text-[var(--color-amber-wolf)] hover:bg-[#451a03] transition-colors"
+              onClick={() => speakChinese(`确认：白狼王将与 ${targets.find((p) => p.id === selectedTargetId)?.seat}号 同归于尽`)}
+              aria-label={`朗读：确认白狼王将与 ${targets.find((p) => p.id === selectedTargetId)?.seat}号 同归于尽`}
+              title="朗读"
+            >
+              🔊
+            </button>
+          </div>
         </div>
       )}
 

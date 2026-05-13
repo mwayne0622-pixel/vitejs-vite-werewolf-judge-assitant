@@ -1,4 +1,6 @@
 import Bilingual from '../components/Bilingual';
+import JudgeScriptHeader from '../components/JudgeScriptHeader';
+import JudgeScriptLines from '../components/JudgeScriptLines';
 import type { Player } from '../types';
 import PlayerSelectButton from '../components/PlayerSelectButton';
 
@@ -13,7 +15,7 @@ type Props = {
 };
 
 export default function FirstNightBearScreen({
-  players,
+  players: _players,
   draftBearOwnerId,
   selectablePlayers,
   canGoNext,
@@ -21,28 +23,42 @@ export default function FirstNightBearScreen({
   onBack,
   onNext,
 }: Props) {
-  const selectedBear = draftBearOwnerId !== null ? players.find((p) => p.id === draftBearOwnerId) ?? null : null;
+  function speakBearLine(text: string) {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = 0.95;
+    utterance.pitch = 0.9;
+    utterance.volume = 1;
+
+    const voices = window.speechSynthesis.getVoices();
+    const zhVoice = voices.find((voice) => voice.lang.toLowerCase().startsWith('zh'));
+    if (zhVoice) utterance.voice = zhVoice;
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function handleSelectBear(playerId: number) {
+    onSelectBear(playerId);
+    speakBearLine('熊已到岗，今晚谁敢靠近我家门口，嗷呜嗷呜。');
+  }
 
   return (
     <section className="bg-[var(--color-wolf-card)] rounded-2xl p-5 mb-5 shadow-[var(--shadow-card)] border border-[var(--color-wolf-border)]">
-      <Bilingual zh="第一夜：熊" en="First night: Bear" />
-
       <div className="mt-3.5 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
-        <div className="text-xs font-bold text-[#818cf8] mb-2">
-          <Bilingual zh="法官宣读" en="Judge script" small />
-        </div>
+        <JudgeScriptHeader />
         <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
-          <Bilingual
-            zh={<>熊请睁眼。<br />请确认你的身份。</>}
-            en={<>Bear, please open your eyes.<br />Confirm your identity.</>}
+          <JudgeScriptLines
+            lines={[
+              { zh: '熊请睁眼。', en: 'Bear, please open your eyes.' },
+            ]}
           />
         </div>
       </div>
 
       <div className="mt-4">
-        <div className="text-[var(--color-moon-dim)] text-xs mb-2">
-          <Bilingual zh="先选中谁是熊，点击下一步后才保存" en="Choose who the Bear is. It is saved only when you click Next." small />
-        </div>
         <div className="flex flex-wrap gap-2">
           {selectablePlayers.map((player) => {
             const selected = draftBearOwnerId === player.id;
@@ -51,26 +67,11 @@ export default function FirstNightBearScreen({
                 key={player.id}
                 player={player}
                 selected={selected}
-                onClick={() => onSelectBear(player.id)}
+                onClick={() => handleSelectBear(player.id)}
               />
             );
           })}
         </div>
-        <div className="mt-2 text-xs text-[var(--color-moon-dim)]">
-          <Bilingual
-            zh={`已选熊：${selectedBear ? `${selectedBear.seat}号` : '无'}`}
-            en={`Selected Bear: ${selectedBear ? `Seat ${selectedBear.seat}` : 'None'}`}
-            small
-          />
-        </div>
-      </div>
-
-      <div className="mt-4 p-3.5 rounded-xl bg-[var(--color-wolf-surface)] border border-[var(--color-wolf-border)] text-[var(--color-moon-dim)] text-xs">
-        <Bilingual
-          zh="每天白天宣布死讯后，若熊左右相邻的存活玩家中存在狼人，则熊会咆哮。"
-          en="After the night result is announced, if at least one of the Bear's adjacent alive players is a wolf, the Bear roars."
-          small
-        />
       </div>
 
       <div className="flex flex-wrap gap-3 mt-5">

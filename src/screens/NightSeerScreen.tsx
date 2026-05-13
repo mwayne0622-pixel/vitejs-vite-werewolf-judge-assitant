@@ -1,4 +1,6 @@
 import Bilingual from '../components/Bilingual';
+import JudgeScriptHeader from '../components/JudgeScriptHeader';
+import JudgeScriptLines from '../components/JudgeScriptLines';
 import type { Player } from '../types';
 import { isWolf } from '../utils/roleUtils';
 import PlayerSelectButton from '../components/PlayerSelectButton';
@@ -29,13 +31,13 @@ export default function NightSeerScreen({
       <Bilingual zh="夜晚：预言家行动" en="Night: Seer acts" />
 
       <div className="mt-3.5 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
-        <div className="text-xs font-bold text-[#818cf8] mb-2">
-          <Bilingual zh="法官宣读" en="Judge script" small />
-        </div>
+        <JudgeScriptHeader />
         <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
-          <Bilingual
-            zh={<>预言家请睁眼。<br />请选择今晚你要查验的玩家。</>}
-            en={<>Seer, please open your eyes.<br />Choose the player you want to check tonight.</>}
+          <JudgeScriptLines
+            lines={[
+              { zh: '预言家请睁眼。', en: 'Seer, please open your eyes.' },
+              { zh: '请选择今晚你要查验的玩家。', en: 'Choose the player you want to check tonight.' },
+            ]}
           />
         </div>
       </div>
@@ -63,6 +65,7 @@ export default function NightSeerScreen({
                 player={player}
                 selected={selected}
                 showRole
+                nightCompactRole
                 disabled={seerIsDead}
                 onClick={() => { if (!seerIsDead) onSelectCheckTarget(player.id); }}
               />

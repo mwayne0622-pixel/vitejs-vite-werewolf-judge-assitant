@@ -1,4 +1,6 @@
 import Bilingual from '../components/Bilingual';
+import JudgeScriptHeader from '../components/JudgeScriptHeader';
+import JudgeScriptLines from '../components/JudgeScriptLines';
 import type { Player } from '../types';
 import PlayerSelectButton from '../components/PlayerSelectButton';
 
@@ -13,7 +15,7 @@ type Props = {
 };
 
 export default function FirstNightWhiteWolfKingScreen({
-  players,
+  players: _players,
   selectablePlayers,
   draftWhiteWolfKingOwnerId,
   canGoNext,
@@ -21,35 +23,46 @@ export default function FirstNightWhiteWolfKingScreen({
   onBack,
   onNext,
 }: Props) {
+  function playWhiteWolfKingVoiceEffect() {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+    const utterance = new SpeechSynthesisUtterance('白狼王来了，今夜由我主宰。');
+    utterance.lang = 'zh-CN';
+    utterance.rate = 0.9;
+    utterance.pitch = 0.88;
+    utterance.volume = 1;
+
+    const voices = window.speechSynthesis.getVoices();
+    const zhVoice = voices.find((voice) => voice.lang.toLowerCase().startsWith('zh'));
+    if (zhVoice) utterance.voice = zhVoice;
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function handleSelectWhiteWolfKing(playerId: number) {
+    onSelectWhiteWolfKing(playerId);
+    playWhiteWolfKingVoiceEffect();
+  }
+
   return (
     <section className="bg-[var(--color-wolf-card)] rounded-2xl p-5 mb-5 shadow-[var(--shadow-card)] border border-[var(--color-wolf-border)]">
-      <Bilingual zh="确认白狼王" en="Confirm White Wolf King" />
-
       <div className="mt-3.5 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
-        <div className="text-xs font-bold text-[#818cf8] mb-2">
-          <Bilingual zh="法官宣读" en="Judge script" small />
-        </div>
+        <JudgeScriptHeader />
         <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
-          <Bilingual
-            zh={<>白狼王请睁眼。<br />请确认你的身份。</>}
-            en={<>White Wolf King, please open your eyes.<br />Confirm your identity.</>}
+          <JudgeScriptLines
+            lines={[
+              { zh: '白狼王请睁眼。', en: 'White Wolf King, please open your eyes.' },
+            ]}
           />
         </div>
-      </div>
-
-      <div className="mt-4 p-3.5 rounded-xl bg-[var(--color-wolf-surface)] border border-[var(--color-wolf-border)] text-[var(--color-moon-dim)] text-xs">
-        <Bilingual
-          zh="请从已选中的狼人中，再指定 1 名玩家为白狼王。白狼王属于狼人阵营，占用一个狼位。"
-          en="Please choose 1 player from the selected wolves to be the White Wolf King. The White Wolf King belongs to the wolf camp and occupies one wolf slot."
-          small
-        />
       </div>
 
       <div className="mt-4">
         <div className="text-[var(--color-moon-dim)] text-xs mb-3">
           <Bilingual zh="当前狼人名单" en="Current wolf list" small />
         </div>
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-wrap gap-2">
           {selectablePlayers.map((player) => {
             const selected = draftWhiteWolfKingOwnerId === player.id;
             return (
@@ -57,23 +70,12 @@ export default function FirstNightWhiteWolfKingScreen({
                 key={player.id}
                 player={player}
                 selected={selected}
-                sublabel={selected ? '已设为白狼王 · Selected as White Wolf King' : '点击设为白狼王 · Click to assign'}
-                onClick={() => onSelectWhiteWolfKing(player.id)}
+                onClick={() => handleSelectWhiteWolfKing(player.id)}
               />
             );
           })}
         </div>
       </div>
-
-      {draftWhiteWolfKingOwnerId !== null && (
-        <div className="mt-4 p-3.5 rounded-xl bg-[var(--color-wolf-surface)] border border-[var(--color-wolf-border-hi)] text-[var(--color-moon)] text-xs">
-          <Bilingual
-            zh={`当前选择：${players.find((p) => p.id === draftWhiteWolfKingOwnerId)?.seat ?? ''}号为白狼王`}
-            en={`Current selection: Seat ${players.find((p) => p.id === draftWhiteWolfKingOwnerId)?.seat ?? ''} as White Wolf King`}
-            small
-          />
-        </div>
-      )}
 
       <div className="flex flex-wrap gap-3 mt-5">
         <button type="button" className="px-4 py-3 rounded-xl font-bold text-sm border border-[var(--color-wolf-border-hi)] bg-[var(--color-wolf-card-alt)] text-[var(--color-moon)] cursor-pointer hover:border-[var(--color-moon-dim)] transition-colors" onClick={onBack}>

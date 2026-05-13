@@ -1,4 +1,6 @@
 import Bilingual from '../components/Bilingual';
+import JudgeScriptHeader from '../components/JudgeScriptHeader';
+import JudgeScriptLines from '../components/JudgeScriptLines';
 import type { Player } from '../types';
 import PlayerSelectButton from '../components/PlayerSelectButton';
 
@@ -28,21 +30,40 @@ export default function NightWolfBeautyScreen({
     if (player.id === lastWolfBeautyCharmTargetId) return false;
     return true;
   });
-  const selectedTarget = wolfBeautyCharmTargetId !== null ? alivePlayers.find((p) => p.id === wolfBeautyCharmTargetId) ?? null : null;
   const isDisabled = wolfBeautyIsDead || !wolfBeautyPlayer;
+
+  function speakWolfBeautyLine(text: string) {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = 0.95;
+    utterance.pitch = 1.08;
+    utterance.volume = 1;
+
+    const voices = window.speechSynthesis.getVoices();
+    const zhVoice = voices.find((voice) => voice.lang.toLowerCase().startsWith('zh'));
+    if (zhVoice) utterance.voice = zhVoice;
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function handleSelectCharmTarget(playerId: number) {
+    onSelectCharmTarget(playerId);
+    speakWolfBeautyLine('就你了，今晚先心动，明天再心碎。');
+  }
 
   return (
     <section className="bg-[var(--color-wolf-card)] rounded-2xl p-5 mb-5 shadow-[var(--shadow-card)] border border-[var(--color-wolf-border)]">
-      <Bilingual zh="夜晚：狼美人魅惑" en="Night: Wolf Beauty charms" />
-
       <div className="mt-3.5 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
-        <div className="text-xs font-bold text-[#818cf8] mb-2">
-          <Bilingual zh="法官宣读" en="Judge script" small />
-        </div>
+        <JudgeScriptHeader />
         <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
-          <Bilingual
-            zh={<>狼美人请睁眼。<br />请选择今晚你要魅惑的玩家。</>}
-            en={<>Wolf Beauty, please open your eyes.<br />Choose the player you want to charm tonight.</>}
+          <JudgeScriptLines
+            lines={[
+              { zh: '狼美人请睁眼。', en: 'Wolf Beauty, please open your eyes.' },
+              { zh: '请选择今晚你要魅惑的玩家。', en: 'Choose the player you want to charm tonight.' },
+            ]}
           />
         </div>
       </div>
@@ -53,16 +74,6 @@ export default function NightWolfBeautyScreen({
         </div>
       )}
 
-      {!wolfBeautyIsDead && wolfBeautyPlayer && (
-        <div className="mt-4 p-3.5 rounded-xl bg-[var(--color-wolf-surface)] border border-[var(--color-wolf-border)] text-[var(--color-moon-dim)] text-xs">
-          <Bilingual
-            zh={`${wolfBeautyPlayer.seat}号狼美人请选择一名玩家进行魅惑。不能连续两晚魅惑同一名玩家。`}
-            en={`Wolf Beauty at Seat ${wolfBeautyPlayer.seat} chooses one player to charm. The same player cannot be charmed on two consecutive nights.`}
-            small
-          />
-        </div>
-      )}
-
       {!wolfBeautyIsDead && !wolfBeautyPlayer && (
         <div className="mt-4 p-3.5 rounded-xl bg-[var(--color-blood-dim)] border border-[var(--color-blood)] text-[var(--color-moon-bright)] text-xs">
           <Bilingual zh="本局尚未确认狼美人身份，本夜无实际操作。" en="The Wolf Beauty has not been confirmed in this game. No real action tonight." small />
@@ -70,9 +81,6 @@ export default function NightWolfBeautyScreen({
       )}
 
       <div className="mt-4">
-        <div className="text-[var(--color-moon-dim)] text-xs mb-2">
-          <Bilingual zh="选择魅惑目标" en="Choose charm target" small />
-        </div>
         <div className="flex flex-wrap gap-2">
           {selectableTargets.map((player) => {
             const selected = wolfBeautyCharmTargetId === player.id;
@@ -82,8 +90,9 @@ export default function NightWolfBeautyScreen({
                 player={player}
                 selected={selected}
                 showRole
+                nightCompactRole
                 disabled={isDisabled}
-                onClick={() => { if (!isDisabled) onSelectCharmTarget(player.id); }}
+                onClick={() => { if (!isDisabled) handleSelectCharmTarget(player.id); }}
               />
             );
           })}
@@ -99,20 +108,6 @@ export default function NightWolfBeautyScreen({
           />
         </div>
       )}
-
-      {selectedTarget && (
-        <div className="mt-4 p-3.5 rounded-xl bg-[#0c1a2e] border border-[#1e3a5f] text-[#93c5fd] text-xs">
-          <Bilingual zh={`本夜魅惑目标：${selectedTarget.seat}号`} en={`Charm target tonight: Seat ${selectedTarget.seat}`} small />
-        </div>
-      )}
-
-      <div className="mt-4 p-3.5 rounded-xl bg-[var(--color-wolf-surface)] border border-[var(--color-wolf-border)] text-[var(--color-moon-dim)] text-xs">
-        <Bilingual
-          zh="提示：狼美人若因投票、女巫毒药或猎人开枪出局，最后一次被魅惑的玩家会随之殉情；若被狼人刀死则不触发。"
-          en="Note: If the Wolf Beauty is voted out, poisoned by the Witch, or shot by the Hunter, the last charmed player dies with her. If killed by the wolf attack, this does not trigger."
-          small
-        />
-      </div>
 
       <div className="flex flex-wrap gap-3 mt-5">
         <button type="button" className="px-4 py-3 rounded-xl font-bold text-sm border border-[var(--color-wolf-border-hi)] bg-[var(--color-wolf-card-alt)] text-[var(--color-moon)] cursor-pointer hover:border-[var(--color-moon-dim)] transition-colors" onClick={onBack}>

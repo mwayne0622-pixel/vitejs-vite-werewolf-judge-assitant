@@ -1,4 +1,6 @@
 import Bilingual from '../components/Bilingual';
+import JudgeScriptHeader from '../components/JudgeScriptHeader';
+import JudgeScriptLines from '../components/JudgeScriptLines';
 import type { Player } from '../types';
 import { isWolf } from '../utils/roleUtils';
 import PlayerSelectButton from '../components/PlayerSelectButton';
@@ -28,30 +30,45 @@ export default function FirstNightSeerScreen({
   onBack,
   onNext,
 }: Props) {
-  const selectedSeer = players.find((p) => p.id === draftSeerOwnerId);
   const checkedPlayer = players.find((p) => p.id === seerCheckId);
   const checkedIsWolfTeam = checkedPlayer ? isWolf(checkedPlayer.role) : false;
 
+  function speakSeerLine(text: string) {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = 0.95;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+
+    const voices = window.speechSynthesis.getVoices();
+    const zhVoice = voices.find((voice) => voice.lang.toLowerCase().startsWith('zh'));
+    if (zhVoice) utterance.voice = zhVoice;
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function handleSelectSeer(playerId: number) {
+    onSelectSeer(playerId);
+    speakSeerLine('预言家到位，今晚我来开盲盒，看看谁是狼人。');
+  }
+
   return (
     <section className="bg-[var(--color-wolf-card)] rounded-2xl p-5 mb-5 shadow-[var(--shadow-card)] border border-[var(--color-wolf-border)]">
-      <Bilingual zh="3. 第一夜：预言家" en="First night: Seer" />
-
       <div className="mt-3.5 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
-        <div className="text-xs font-bold text-[#818cf8] mb-2">
-          <Bilingual zh="法官宣读" en="Judge script" small />
-        </div>
+        <JudgeScriptHeader />
         <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
-          <Bilingual
-            zh={<>预言家请睁眼。<br />请确认你的身份。<br />请指出今晚你要查验的玩家。</>}
-            en={<>Seer, please open your eyes.<br />Confirm your identity.<br />Choose the player you want to check tonight.</>}
+          <JudgeScriptLines
+            lines={[
+              { zh: '预言家请睁眼。', en: 'Seer, please open your eyes.' },
+            ]}
           />
         </div>
       </div>
 
       <div className="mt-4">
-        <div className="text-[var(--color-moon-dim)] text-xs mb-2">
-          <Bilingual zh="先选中谁是预言家，点击下一步后才保存" en="Choose the seer first. It is saved only when you click Next." small />
-        </div>
         <div className="flex flex-wrap gap-2">
           {selectablePlayers.map((player) => {
             const selected = draftSeerOwnerId === player.id;
@@ -60,24 +77,25 @@ export default function FirstNightSeerScreen({
                 key={player.id}
                 player={player}
                 selected={selected}
-                onClick={() => onSelectSeer(player.id)}
+                onClick={() => handleSelectSeer(player.id)}
               />
             );
           })}
         </div>
-        <div className="mt-2 text-xs text-[var(--color-moon-dim)]">
-          <Bilingual
-            zh={`已选预言家：${selectedSeer ? `${selectedSeer.seat}号` : '无'}`}
-            en={`Selected seer: ${selectedSeer ? `Seat ${selectedSeer.seat}` : 'None'}`}
-            small
-          />
-        </div>
       </div>
 
       <div className="mt-5">
-        <div className="text-[var(--color-moon-dim)] text-xs mb-2">
-          <Bilingual zh="选择查验目标" en="Choose a player to check" small />
+        <div className="mt-3.5 mb-5 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
+          <JudgeScriptHeader />
+          <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
+            <JudgeScriptLines
+              lines={[
+                { zh: '请指出今晚你要查验的玩家。', en: 'Choose the player you want to check tonight.' },
+              ]}
+            />
+          </div>
         </div>
+
         <div className="flex flex-wrap gap-2">
           {alivePlayers.map((player) => {
             const selected = seerCheckId === player.id;

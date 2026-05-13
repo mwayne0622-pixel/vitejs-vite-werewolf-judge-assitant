@@ -1,4 +1,6 @@
 import Bilingual from '../components/Bilingual';
+import JudgeScriptHeader from '../components/JudgeScriptHeader';
+import JudgeScriptLines from '../components/JudgeScriptLines';
 import PlayerSelectButton from '../components/PlayerSelectButton';
 import type { Player } from '../types';
 
@@ -23,32 +25,40 @@ export default function FirstNightWolfScreen({
   onSetWolfTarget,
   onNext,
 }: Props) {
-  const selectedWolfSeats = selectedWolfIds
-    .map((id) => players.find((p) => p.id === id)?.seat)
-    .filter((seat): seat is number => seat !== undefined);
+  function playDeadVoiceEffect() {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+    const utterance = new SpeechSynthesisUtterance('嘿嘿，今晚就刀你了。');
+    utterance.lang = 'zh-CN';
+    utterance.rate = 0.92;
+    utterance.pitch = 0.9;
+    utterance.volume = 1;
+
+    const voices = window.speechSynthesis.getVoices();
+    const zhVoice = voices.find((voice) => voice.lang.toLowerCase().startsWith('zh'));
+    if (zhVoice) utterance.voice = zhVoice;
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function handleSetWolfTarget(playerId: number) {
+    onSetWolfTarget(playerId);
+    playDeadVoiceEffect();
+  }
 
   return (
     <section className="bg-[var(--color-wolf-card)] rounded-2xl p-5 mb-5 shadow-[var(--shadow-card)] border border-[var(--color-wolf-border)]">
-      <Bilingual zh="2. 第一夜：狼人" en="First night: Wolves" />
-
       <div className="mt-3.5 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
-        <div className="text-xs font-bold text-[#818cf8] mb-2">
-          <Bilingual zh="法官宣读" en="Judge script" small />
-        </div>
+        <JudgeScriptHeader />
         <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
-          <Bilingual
-            zh={<>狼人请睁眼。<br />请确认彼此身份，并选择今晚要袭击的玩家。</>}
-            en={<>Wolves, please open your eyes.<br />Confirm each other, then choose tonight&apos;s target.</>}
+          <JudgeScriptLines
+            lines={[
+              { zh: '天黑请闭眼。', en: 'Night falls, everyone close your eyes.' },
+              { zh: '狼人请睁眼。', en: 'Wolves, please open your eyes.' },
+            ]}
           />
         </div>
-      </div>
-
-      <div className="mt-4 p-3.5 rounded-xl bg-[var(--color-wolf-surface)] border border-[var(--color-wolf-border)] text-[var(--color-moon-dim)] text-xs">
-        <Bilingual
-          zh="先标记哪些玩家是狼人，再记录今晚刀口。狼人可以自刀。"
-          en="Mark which players are wolves first, then record tonight's target. Wolves may target themselves."
-          small
-        />
       </div>
 
       <div className="mt-4">
@@ -65,26 +75,28 @@ export default function FirstNightWolfScreen({
             />
           ))}
         </div>
-        <div className="mt-2 text-xs text-[var(--color-moon-dim)]">
-          <Bilingual
-            zh={`已选狼人：${selectedWolfSeats.length > 0 ? selectedWolfSeats.map((s) => `${s}号`).join('、') : '无'}`}
-            en={`Selected wolves: ${selectedWolfSeats.length > 0 ? selectedWolfSeats.map((s) => `Seat ${s}`).join(', ') : 'None'}`}
-            small
-          />
-        </div>
       </div>
 
       <div className="mt-5">
-        <div className="text-[var(--color-moon-dim)] text-xs mb-2">
-          <Bilingual zh="选择今晚刀口" en="Select tonight's target" small />
+        <div className="mt-3.5 mb-5 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
+          <JudgeScriptHeader />
+          <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
+            <JudgeScriptLines
+              lines={[
+                { zh: '今晚你要刀谁？', en: "Who's your target tonight?" },
+              ]}
+            />
+          </div>
         </div>
+
         <div className="flex flex-wrap gap-2">
           {players.map((player) => (
             <PlayerSelectButton
               key={player.id}
               player={player}
               selected={wolfTargetId === player.id}
-              onClick={() => onSetWolfTarget(player.id)}
+              showWolfClawOnSelected
+              onClick={() => handleSetWolfTarget(player.id)}
             />
           ))}
         </div>

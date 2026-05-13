@@ -363,10 +363,8 @@ export default function App() {
   const firstNightWolfBeautyReady =
     !config.hasWolfBeauty ||
     (draftWolfBeautyOwnerId !== null && wolfBeautyCharmTargetId !== null);
-
   const aliveWhiteWolfKing =
     whiteWolfKingPlayer !== null && whiteWolfKingPlayer.alive;
-
   const canWhiteWolfKingExplode =
     phase === 'day-result' &&
     dayApplied &&
@@ -1341,7 +1339,6 @@ export default function App() {
             witchPoisonId={witchPoisonId}
             witchSaveUsed={witchSaveUsed}
             witchPoisonUsed={witchPoisonUsed}
-            blockSelfSave={blockSelfSave}
             laterNightSaveDisabled={laterNightSaveDisabled}
             laterNightPoisonDisabled={laterNightPoisonDisabled}
             alivePlayers={alivePlayers}
@@ -1375,7 +1372,6 @@ export default function App() {
             dayApplied={dayApplied}
             gameOver={gameOver}
             gameResult={gameResult}
-
             whiteWolfKingOwnerId={whiteWolfKingOwnerId}
             canWhiteWolfKingExplode={canWhiteWolfKingExplode}
 
@@ -1384,17 +1380,15 @@ export default function App() {
             wolfBeautyLoverMessage={wolfBeautyLoverMessage}
             wolfBeautyLoverEnglish={wolfBeautyLoverEnglish}
 
-            onStartWhiteWolfKingExplode={startWhiteWolfKingExplode}
-
             onBack={() => setPhase(getPrevNightPhase(config, 'day-result'))}
             onApplyDayResult={applyDayResult}
             onGoToVote={() => setPhase('day-vote')}
             onStartNextNight={startNextNight}
-            onReset={resetCurrentGame}
             hunterShotMessage={hunterShotMessage}
             hunterShotEnglish={hunterShotEnglish}
             whiteWolfKingMessage={whiteWolfKingMessage}
             whiteWolfKingEnglish={whiteWolfKingEnglish}
+            onStartWhiteWolfKingExplode={startWhiteWolfKingExplode}
           />
         )}
 

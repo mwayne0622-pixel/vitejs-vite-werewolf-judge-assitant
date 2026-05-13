@@ -1,4 +1,6 @@
 import Bilingual from '../components/Bilingual';
+import JudgeScriptHeader from '../components/JudgeScriptHeader';
+import JudgeScriptLines from '../components/JudgeScriptLines';
 import type { Player } from '../types';
 import PlayerSelectButton from '../components/PlayerSelectButton';
 
@@ -23,16 +25,14 @@ export default function NightGuardScreen({
 }: Props) {
   return (
     <section className="bg-[var(--color-wolf-card)] rounded-2xl p-5 mb-5 shadow-[var(--shadow-card)] border border-[var(--color-wolf-border)]">
-      <Bilingual zh="夜晚：守卫行动" en="Night: Guard acts" />
-
       <div className="mt-3.5 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
-        <div className="text-xs font-bold text-[#818cf8] mb-2">
-          <Bilingual zh="法官宣读" en="Judge script" small />
-        </div>
+        <JudgeScriptHeader />
         <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
-          <Bilingual
-            zh={<>守卫请睁眼。<br />请选择今晚你要守护的玩家。</>}
-            en={<>Guard, please open your eyes.<br />Choose the player you want to guard tonight.</>}
+          <JudgeScriptLines
+            lines={[
+              { zh: '守卫请睁眼。', en: 'Guard, please open your eyes.' },
+              { zh: '请选择今晚你要守护的玩家。', en: 'Choose the player you want to guard tonight.' },
+            ]}
           />
         </div>
       </div>
@@ -47,10 +47,6 @@ export default function NightGuardScreen({
         </div>
       )}
 
-      <div className="mt-4 p-3.5 rounded-xl bg-[var(--color-wolf-surface)] border border-[var(--color-wolf-border)] text-[var(--color-moon-dim)] text-xs">
-        <Bilingual zh="守卫不能连续两晚守同一人。" en="The guard cannot protect the same player on two consecutive nights." small />
-      </div>
-
       <div className="flex flex-wrap gap-2 mt-4">
         {alivePlayers.map((player) => {
           const disabled = guardIsDead || player.id === lastGuardTargetId;
@@ -61,6 +57,7 @@ export default function NightGuardScreen({
               player={player}
               selected={selected}
               showRole
+              nightCompactRole
               disabled={disabled}
               disabledNote={player.id === lastGuardTargetId ? '上夜已守 · protected last night' : undefined}
               onClick={() => { if (!disabled) onSelectTarget(player.id); }}
