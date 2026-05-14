@@ -1338,7 +1338,6 @@ export default function App() {
             witchSave={witchSave}
             witchPoisonId={witchPoisonId}
             witchSaveUsed={witchSaveUsed}
-            witchPoisonUsed={witchPoisonUsed}
             laterNightSaveDisabled={laterNightSaveDisabled}
             laterNightPoisonDisabled={laterNightPoisonDisabled}
             alivePlayers={alivePlayers}

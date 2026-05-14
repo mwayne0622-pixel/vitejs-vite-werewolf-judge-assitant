@@ -10,7 +10,6 @@ type Props = {
   witchSave: boolean;
   witchPoisonId: number | null;
   witchSaveUsed: boolean;
-  witchPoisonUsed: boolean;
   laterNightSaveDisabled: boolean;
   laterNightPoisonDisabled: boolean;
   alivePlayers: Player[];
@@ -26,7 +25,6 @@ export default function NightWitchScreen({
   witchSave,
   witchPoisonId,
   witchSaveUsed,
-  witchPoisonUsed,
   laterNightSaveDisabled,
   laterNightPoisonDisabled,
   alivePlayers,
