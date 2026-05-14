@@ -720,6 +720,12 @@ export default function App() {
     checkGameOver(nextPlayers);
   }
 
+  useEffect(() => {
+    if (phase !== 'day-result') return;
+    if (dayApplied || gameOver) return;
+    applyDayResult();
+  }, [phase, dayApplied, gameOver, applyDayResult]);
+
   function setPlayerVote(voterId: number, targetId: number) {
     if (!currentVoteTargets.some((p) => p.id === targetId)) return;
 
@@ -1380,7 +1386,6 @@ export default function App() {
             wolfBeautyLoverEnglish={wolfBeautyLoverEnglish}
 
             onBack={() => setPhase(getPrevNightPhase(config, 'day-result'))}
-            onApplyDayResult={applyDayResult}
             onGoToVote={() => setPhase('day-vote')}
             onStartNextNight={startNextNight}
             hunterShotMessage={hunterShotMessage}
@@ -1408,8 +1413,6 @@ export default function App() {
 
         {phase === 'hunter-shoot' && hunterPlayer && hunterShootSource && (
           <HunterShootScreen
-            source={hunterShootSource}
-            hunterPlayer={hunterPlayer}
             aliveTargets={hunterShootTargets}
             selectedTargetId={hunterShotTargetId}
             onSelectTarget={setHunterShotTargetId}

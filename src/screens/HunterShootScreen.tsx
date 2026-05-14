@@ -1,10 +1,10 @@
 import Bilingual from '../components/Bilingual';
+import JudgeScriptHeader from '../components/JudgeScriptHeader';
+import JudgeScriptLines from '../components/JudgeScriptLines';
 import type { Player } from '../types';
 import PlayerSelectButton from '../components/PlayerSelectButton';
 
 type Props = {
-  source: 'night' | 'vote';
-  hunterPlayer: Player;
   aliveTargets: Player[];
   selectedTargetId: number | null;
   onSelectTarget: (playerId: number) => void;
@@ -13,8 +13,6 @@ type Props = {
 };
 
 export default function HunterShootScreen({
-  source,
-  hunterPlayer,
   aliveTargets,
   selectedTargetId,
   onSelectTarget,
@@ -23,16 +21,36 @@ export default function HunterShootScreen({
 }: Props) {
   const canConfirm = selectedTargetId !== null;
 
+  function speakChinese(text: string) {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = 0.95;
+    utterance.pitch = 1.02;
+    utterance.volume = 1;
+    const voices = window.speechSynthesis.getVoices();
+    const zhVoice = voices.find((voice) => voice.lang.toLowerCase().startsWith('zh'));
+    if (zhVoice) utterance.voice = zhVoice;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function handleSelectTarget(player: Player) {
+    speakChinese(`猎人举枪锁定${player.seat}号：我人是倒了，准头还在线。今夜这枪，算你中奖了。`);
+    onSelectTarget(player.id);
+  }
+
   return (
     <section className="bg-[var(--color-wolf-card)] rounded-2xl p-5 mb-5 shadow-[var(--shadow-card)] border border-[var(--color-wolf-border)]">
-      <Bilingual zh="猎人开枪" en="Hunter shoots" />
-
-      <div className="mt-4 p-3.5 rounded-xl bg-[var(--color-amber-dim)] border border-[var(--color-amber-border)] text-[#fde68a] text-xs">
-        <Bilingual
-          zh={`猎人（${hunterPlayer.seat}号）已因${source === 'night' ? '夜晚死亡' : '投票出局'}触发技能，可选择带走一名存活玩家，也可以选择不开枪。`}
-          en={`Hunter (Seat ${hunterPlayer.seat}) died by ${source === 'night' ? 'night kill' : 'vote out'} and may shoot one alive player, or skip.`}
-          small
-        />
+      <div className="mt-3.5 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
+        <JudgeScriptHeader />
+        <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
+          <JudgeScriptLines
+            lines={[
+              { zh: '请选择是否开枪，并指定一名存活玩家。', en: 'Choose whether to shoot, and name one alive player.' },
+            ]}
+          />
+        </div>
       </div>
 
       <div className="mt-4">
@@ -43,14 +61,14 @@ export default function HunterShootScreen({
           {aliveTargets.map((player) => {
             const selected = selectedTargetId === player.id;
             return (
-              <PlayerSelectButton
-                key={player.id}
-                player={player}
-                selected={selected}
-                onClick={() => onSelectTarget(player.id)}
-              />
-            );
-          })}
+                <PlayerSelectButton
+                  key={player.id}
+                  player={player}
+                  selected={selected}
+                  onClick={() => handleSelectTarget(player)}
+                />
+              );
+            })}
         </div>
       </div>
 

@@ -43,7 +43,6 @@ type Props = {
   whiteWolfKingEnglish: string | null;
   onStartWhiteWolfKingExplode: () => void;
   onBack: () => void;
-  onApplyDayResult: () => void;
   onGoToVote: () => void;
   onStartNextNight: () => void;
 };
@@ -51,23 +50,6 @@ type Props = {
 function roleLabel(player: Player) {
   if (player.role === '白痴' && player.idiotRevealed) return '白痴（已翻牌）';
   return player.role ?? '未确认';
-}
-
-function roleToEnglish(player: Player) {
-  if (player.role === '白痴' && player.idiotRevealed) return 'Idiot (Revealed)';
-  switch (player.role) {
-    case '狼人': return 'Wolf';
-    case '白狼王': return 'White Wolf King';
-    case '狼美人': return 'Wolf Beauty';
-    case '预言家': return 'Seer';
-    case '女巫': return 'Witch';
-    case '守卫': return 'Guard';
-    case '猎人': return 'Hunter';
-    case '白痴': return 'Idiot';
-    case '熊': return 'Bear';
-    case '村民': return 'Villager';
-    default: return 'Unconfirmed';
-  }
 }
 
 export default function DayResultScreen({
@@ -90,18 +72,17 @@ export default function DayResultScreen({
   whiteWolfKingEnglish,
   onStartWhiteWolfKingExplode,
   onBack,
-  onApplyDayResult,
   onGoToVote,
   onStartNextNight,
 }: Props) {
   const canGoBack = !gameOver && !dayApplied;
-  const canApplyNightDeaths = !gameOver && !dayApplied;
   const canGoToVote = !gameOver && dayApplied && !voteApplied;
   const canStartNextNight = !gameOver && voteApplied;
   const dayResultZh =
     dayResult.message === '平安夜' ? '今晚是平安夜' : dayResult.message;
   const dayResultEn =
     dayResult.english === 'Peaceful night' ? 'Tonight is a peaceful night' : dayResult.english;
+  const safeGameResultEn = gameResult ?? 'Game over';
 
   function speakChinese(text: string) {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
@@ -117,46 +98,61 @@ export default function DayResultScreen({
     window.speechSynthesis.speak(utterance);
   }
 
+  function handleWhiteWolfKingExplode() {
+    speakChinese('白狼王摊牌了：这局先炸个响，带你们一起看烟花。');
+    onStartWhiteWolfKingExplode();
+  }
+
+  function speakDayVoteSummary() {
+    const detail = Object.entries(voteSummary.tally)
+      .map(([id, count]) => {
+        const player = players.find((p) => p.id === Number(id));
+        return player ? `${player.seat}号${count}票` : null;
+      })
+      .filter((item): item is string => item !== null)
+      .join('，');
+    const text = `投票结果：${voteSummary.message}。当前票型：${detail || '暂无有效票型'}。`;
+    speakChinese(text);
+  }
+
   return (
     <section className="bg-[var(--color-wolf-card)] rounded-2xl p-5 mb-5 shadow-[var(--shadow-card)] border border-[var(--color-wolf-border)]">
       <div className="mt-3.5 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
         <JudgeScriptHeader />
-        <div className="flex flex-col gap-3 mt-3">
+        <div className="flex flex-col gap-2.5 mt-3 text-[var(--color-moon-bright)] font-semibold leading-relaxed">
           {gameOver ? (
-            <div className="p-4 rounded-2xl bg-[var(--color-blood-dim)] border border-[var(--color-blood)] text-[var(--color-moon-bright)]">
-              <Bilingual zh={gameResult ?? '游戏结束'} en={gameResult ?? 'Game over'} />
+            <div className="flex items-center gap-2">
+              <Bilingual zh={gameResult ?? '游戏结束'} en={safeGameResultEn} />
             </div>
           ) : (
             <>
-              <div className="p-4 rounded-2xl bg-[var(--color-amber-dim)] border border-[var(--color-amber-border)] text-[#fde68a]">
-                <div className="flex items-center gap-2">
-                  <Bilingual zh={dayResultZh} en={dayResultEn} />
-                  <button
-                    type="button"
-                    className="px-1.5 py-0.5 rounded-md border border-[#d97706] text-xs text-[#fde68a] hover:bg-[#78350f] transition-colors"
-                    onClick={() => speakChinese(dayResultZh)}
-                    aria-label={`朗读：${dayResultZh}`}
-                    title="朗读"
-                  >
-                    🔊
-                  </button>
-                </div>
+              <div className="flex items-center gap-2">
+                <Bilingual zh={dayResultZh} en={dayResultEn} />
+                <button
+                  type="button"
+                  className="px-1.5 py-0.5 rounded-md border border-[#d97706] text-xs text-[#fde68a] hover:bg-[#78350f] transition-colors"
+                  onClick={() => speakChinese(dayResultZh)}
+                  aria-label={`朗读：${dayResultZh}`}
+                  title="朗读"
+                >
+                  🔊
+                </button>
               </div>
 
-              {hunterShotMessage && hunterShotEnglish && (
-                <div className="p-3.5 rounded-xl bg-[var(--color-blood-dim)] border border-[var(--color-blood)] text-[var(--color-moon-bright)]">
-                  <Bilingual zh={hunterShotMessage} en={hunterShotEnglish} small />
+              {hunterShotMessage && (
+                <div className="flex items-start gap-2">
+                  <Bilingual zh={hunterShotMessage} en={hunterShotEnglish ?? ''} small />
                 </div>
               )}
 
-              {whiteWolfKingMessage && whiteWolfKingEnglish && (
-                <div className="p-3.5 rounded-xl bg-[var(--color-blood-dim)] border border-[var(--color-blood)] text-[var(--color-moon-bright)]">
-                  <Bilingual zh={whiteWolfKingMessage} en={whiteWolfKingEnglish} small />
+              {whiteWolfKingMessage && (
+                <div className="flex items-start gap-2">
+                  <Bilingual zh={whiteWolfKingMessage} en={whiteWolfKingEnglish ?? ''} small />
                 </div>
               )}
 
               {bearInfo && (
-                <div className="p-4 rounded-2xl bg-[var(--color-amber-dim)] border border-[var(--color-amber-border)] text-[#fde68a]">
+                <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-2">
                     <Bilingual zh={bearInfo.message} en={bearInfo.english} />
                     <button
@@ -170,33 +166,20 @@ export default function DayResultScreen({
                     </button>
                   </div>
                   {bearInfo.bearPlayer && bearInfo.bearPlayer.alive && (
-                    <div className="mt-2 opacity-80 flex items-center gap-2">
+                    <div className="opacity-80">
                       <Bilingual
                         zh={`熊：${bearInfo.bearPlayer.seat}号 ｜ 左邻居：${bearInfo.leftNeighbor ? `${bearInfo.leftNeighbor.seat}号` : '无'} ｜ 右邻居：${bearInfo.rightNeighbor ? `${bearInfo.rightNeighbor.seat}号` : '无'}`}
                         en={`Bear: Seat ${bearInfo.bearPlayer.seat} | Left neighbor: ${bearInfo.leftNeighbor ? `Seat ${bearInfo.leftNeighbor.seat}` : 'None'} | Right neighbor: ${bearInfo.rightNeighbor ? `Seat ${bearInfo.rightNeighbor.seat}` : 'None'}`}
                         small
                       />
-                      <button
-                        type="button"
-                        className="px-1.5 py-0.5 rounded-md border border-[#d97706] text-xs text-[#fde68a] hover:bg-[#78350f] transition-colors"
-                        onClick={() =>
-                          speakChinese(
-                            `熊${bearInfo.bearPlayer?.seat}号，左邻居${bearInfo.leftNeighbor ? `${bearInfo.leftNeighbor.seat}号` : '无'}，右邻居${bearInfo.rightNeighbor ? `${bearInfo.rightNeighbor.seat}号` : '无'}`
-                          )
-                        }
-                        aria-label="朗读熊邻座信息"
-                        title="朗读"
-                      >
-                        🔊
-                      </button>
                     </div>
                   )}
                 </div>
               )}
 
-              {wolfBeautyLoverMessage && wolfBeautyLoverEnglish && (
-                <div className="p-3.5 rounded-xl bg-[var(--color-blood-dim)] border border-[var(--color-blood)] text-[var(--color-moon-bright)]">
-                  <Bilingual zh={wolfBeautyLoverMessage} en={wolfBeautyLoverEnglish} small />
+              {wolfBeautyLoverMessage && (
+                <div className="flex items-start gap-2">
+                  <Bilingual zh={wolfBeautyLoverMessage} en={wolfBeautyLoverEnglish ?? ''} small />
                 </div>
               )}
             </>
@@ -209,9 +192,18 @@ export default function DayResultScreen({
       </div>
 
       <div className="mt-2 p-4 rounded-xl bg-[var(--color-wolf-surface)] border border-[var(--color-wolf-border)] flex flex-col gap-2.5 text-left">
-        <div className="text-[var(--color-moon-bright)] text-sm">
+        <div className="text-[var(--color-moon-bright)] text-sm flex items-center gap-2">
           <strong className="text-[var(--color-moon-dim)]">结果：</strong>
-          {voteSummary.message}
+          <span>{voteSummary.message}</span>
+          <button
+            type="button"
+            className="px-1.5 py-0.5 rounded-md border border-[#d97706] text-xs text-[#fde68a] hover:bg-[#78350f] transition-colors"
+            onClick={speakDayVoteSummary}
+            aria-label="朗读投票结果和票型"
+            title="朗读"
+          >
+            🔊
+          </button>
         </div>
 
         {unvotedPlayers.length > 0 && (
@@ -245,15 +237,7 @@ export default function DayResultScreen({
         </button>
 
         <button
-          className={`px-4 py-3 rounded-xl font-bold text-sm border-none cursor-pointer transition-all ${canApplyNightDeaths ? 'bg-[#f59e0b] text-white hover:brightness-110' : 'bg-[var(--color-wolf-card-alt)] text-[var(--color-moon-dim)] cursor-not-allowed opacity-50'}`}
-          disabled={!canApplyNightDeaths}
-          onClick={onApplyDayResult}
-        >
-          <Bilingual zh="应用夜间死亡" en="Apply night deaths" small />
-        </button>
-
-        <button
-          className={`px-4 py-3 rounded-xl font-bold text-sm border-none cursor-pointer transition-all ${canGoToVote ? 'bg-[#3b82f6] text-white hover:brightness-110' : 'bg-[var(--color-wolf-card-alt)] text-[var(--color-moon-dim)] cursor-not-allowed opacity-50'}`}
+          className={`px-4 py-3 rounded-xl font-bold text-sm border-none cursor-pointer transition-all ${canGoToVote ? 'bg-[#7c2d12] text-[#ffe7cc] hover:bg-[#9a3412]' : 'bg-[var(--color-wolf-card-alt)] text-[var(--color-moon-dim)] cursor-not-allowed opacity-50'}`}
           disabled={!canGoToVote}
           onClick={onGoToVote}
         >
@@ -261,7 +245,7 @@ export default function DayResultScreen({
         </button>
 
         <button
-          className={`px-4 py-3 rounded-xl font-bold text-sm border-none cursor-pointer transition-all ${canStartNextNight ? 'bg-[#22c55e] text-white hover:brightness-110' : 'bg-[var(--color-wolf-card-alt)] text-[var(--color-moon-dim)] cursor-not-allowed opacity-50'}`}
+          className={`px-4 py-3 rounded-xl font-bold text-sm border-none cursor-pointer transition-all ${canStartNextNight ? 'bg-[#0f3d3e] text-[#d7fffb] hover:bg-[#145255]' : 'bg-[var(--color-wolf-card-alt)] text-[var(--color-moon-dim)] cursor-not-allowed opacity-50'}`}
           disabled={!canStartNextNight}
           onClick={onStartNextNight}
         >
@@ -272,36 +256,36 @@ export default function DayResultScreen({
       <div className="mt-5">
         <Bilingual zh="玩家状态" en="Player status" small />
 
-        <div className="flex flex-col gap-2.5 mt-2.5">
+        <div className="mt-2.5 flex flex-wrap gap-2.5">
           {players.map((player) => {
             const isRevealedIdiot = player.role === '白痴' && player.idiotRevealed;
             return (
-              <div key={player.id} className="grid items-center gap-2.5 p-2.5 border border-[var(--color-wolf-border)] rounded-xl bg-[var(--color-wolf-surface)]" style={{ gridTemplateColumns: '48px minmax(60px,1fr) minmax(100px,1.2fr) auto' }}>
-                <div className="w-12 text-center bg-[var(--color-wolf-card-alt)] border border-[var(--color-wolf-border-hi)] text-[var(--color-moon-bright)] rounded-lg py-1.5 text-sm font-bold whitespace-nowrap box-border">
-                  {player.seat}号
-                </div>
-
-                <div className="min-w-0 text-sm text-[var(--color-moon)]">{player.name}</div>
-
-                <div className={`min-w-0 text-sm ${isRevealedIdiot ? 'text-[var(--color-blood)] font-bold' : 'text-[var(--color-moon)]'}`}>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Bilingual zh={roleLabel(player)} en={roleToEnglish(player)} small />
-                    {canWhiteWolfKingExplode && player.id === whiteWolfKingOwnerId && player.alive && (
-                      <button
-                        className={`border-none bg-[var(--color-blood)] text-white w-8 h-8 rounded-lg cursor-pointer flex items-center justify-center flex-shrink-0 hover:brightness-110 ${gameOver ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        disabled={gameOver}
-                        onClick={onStartWhiteWolfKingExplode}
-                        aria-label="白狼王自爆"
-                        title="白狼王自爆"
-                      >
-                        <span className="text-xl leading-none" aria-hidden="true">💣</span>
-                      </button>
-                    )}
+              <div
+                key={player.id}
+                className={`px-3 py-2.5 rounded-2xl border flex items-center gap-2.5 ${player.alive ? 'bg-[var(--color-wolf-card-alt)] border-[var(--color-wolf-border-hi)]' : 'bg-[var(--color-blood-dim)] border-[var(--color-blood)]'}`}
+              >
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="w-12 text-center bg-[var(--color-wolf-card-alt)] border border-[var(--color-wolf-border-hi)] text-[var(--color-moon-bright)] rounded-lg py-1.5 text-sm font-bold whitespace-nowrap box-border">
+                    {player.seat}号
                   </div>
+                  <div className={`min-w-0 text-sm font-semibold ${isRevealedIdiot ? 'text-[var(--color-blood)]' : 'text-[var(--color-moon-bright)]'}`}>
+                    {roleLabel(player)}
+                  </div>
+                  {canWhiteWolfKingExplode && player.id === whiteWolfKingOwnerId && player.alive && (
+                    <button
+                      className={`border-none bg-[var(--color-blood)] text-white w-8 h-8 rounded-lg cursor-pointer flex items-center justify-center flex-shrink-0 hover:brightness-110 ${gameOver ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      disabled={gameOver}
+                      onClick={handleWhiteWolfKingExplode}
+                      aria-label="白狼王自爆"
+                      title="白狼王自爆"
+                    >
+                      <span className="text-xl leading-none" aria-hidden="true">💣</span>
+                    </button>
+                  )}
                 </div>
 
-                <div className={`px-2.5 py-1.5 rounded-full text-xs whitespace-nowrap flex-shrink-0 text-center border ${player.alive ? 'bg-[var(--color-alive-bg)] border-[var(--color-alive-border)] text-[var(--color-alive-text)]' : 'bg-[var(--color-dead-bg)] border-[var(--color-dead-border)] text-[var(--color-dead-text)]'}`}>
-                  <Bilingual zh={player.alive ? '存活' : '死亡'} en={player.alive ? 'Alive' : 'Dead'} small />
+                <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs border ${player.alive ? 'bg-[var(--color-alive-bg)] border-[var(--color-alive-border)] text-[var(--color-alive-text)]' : 'bg-[var(--color-dead-bg)] border-[var(--color-dead-border)] text-[var(--color-dead-text)]'}`}>
+                  <span aria-hidden="true" className="leading-none">{player.alive ? '🟢' : '☠️'}</span>
                 </div>
               </div>
             );

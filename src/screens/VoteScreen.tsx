@@ -40,10 +40,30 @@ export default function VoteScreen({
   const unvotedPlayers = voters.filter((voter) => votes[voter.id] == null);
   const canApply = !voteApplied && allCurrentVotersVoted;
 
+  function speakChinese(text: string) {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = 0.95;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    const voices = window.speechSynthesis.getVoices();
+    const zhVoice = voices.find((voice) => voice.lang.toLowerCase().startsWith('zh'));
+    if (zhVoice) utterance.voice = zhVoice;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function speakVoteSummary() {
+    const detail = voteTargets
+      .map((target) => `${target.seat}号${voteSummary.tally[target.id] || 0}票`)
+      .join('，');
+    const text = `投票结果：${voteSummary.message}。当前票型：${detail}。`;
+    speakChinese(text);
+  }
+
   return (
     <section className="bg-[var(--color-wolf-card)] rounded-2xl p-5 mb-5 shadow-[var(--shadow-card)] border border-[var(--color-wolf-border)]">
-      <Bilingual zh="白天投票" en="Day voting" />
-
       <div className="mt-2">
         <Bilingual
           zh={voteRound === 1 ? '当前为第一轮投票' : '当前为第二轮平票再投'}
@@ -61,10 +81,6 @@ export default function VoteScreen({
       </div>
 
       <div className="mt-4">
-        <div className="text-[var(--color-moon-dim)] text-xs mb-2">
-          <Bilingual zh="逐个记录投票" en="Record votes one by one" small />
-        </div>
-
         <div className="flex flex-col gap-3">
           {voters.map((voter) => (
             <div key={voter.id} className="flex flex-col gap-2.5 p-3 border border-[var(--color-wolf-border)] rounded-xl bg-[var(--color-wolf-surface)]">
@@ -90,9 +106,18 @@ export default function VoteScreen({
       </div>
 
       <div className="mt-4 p-4 rounded-xl bg-[var(--color-wolf-surface)] border border-[var(--color-wolf-border)] flex flex-col gap-2.5 text-left">
-        <div className="text-[var(--color-moon-bright)] text-sm">
+        <div className="text-[var(--color-moon-bright)] text-sm flex items-center gap-2">
           <strong className="text-[var(--color-moon-dim)]">投票结果：</strong>
-          {voteSummary.message}
+          <span>{voteSummary.message}</span>
+          <button
+            type="button"
+            className="px-1.5 py-0.5 rounded-md border border-[#d97706] text-xs text-[#fde68a] hover:bg-[#78350f] transition-colors"
+            onClick={speakVoteSummary}
+            aria-label="朗读投票结果和票型"
+            title="朗读"
+          >
+            🔊
+          </button>
         </div>
 
         {unvotedPlayers.length > 0 && (
