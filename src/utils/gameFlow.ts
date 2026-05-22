@@ -8,6 +8,7 @@ export function getIncludedGodCount(config: GameConfig) {
     config.hasHunter,
     config.hasIdiot,
     config.hasBear,
+    config.hasKnight,
   ].filter(Boolean).length;
 }
 
@@ -28,6 +29,7 @@ export function getNextFirstNightPhase(
 ): Phase {
   if (current === 'first-night-wolf') {
     if (config.hasWhiteWolfKing) return 'first-night-white-wolf-king';
+    if (config.hasHiddenWolf) return 'first-night-hidden-wolf';
     if (config.hasWolfBeauty) return 'first-night-wolf-beauty';
     if (config.hasSeer) return 'first-night-seer';
     if (config.hasWitch) return 'first-night-witch';
@@ -35,10 +37,12 @@ export function getNextFirstNightPhase(
     if (config.hasHunter) return 'first-night-hunter';
     if (config.hasIdiot) return 'first-night-idiot';
     if (config.hasBear) return 'first-night-bear';
+    if (config.hasKnight) return 'first-night-knight';
     return 'day-result';
   }
 
   if (current === 'first-night-white-wolf-king') {
+    if (config.hasHiddenWolf) return 'first-night-hidden-wolf';
     if (config.hasWolfBeauty) return 'first-night-wolf-beauty';
     if (config.hasSeer) return 'first-night-seer';
     if (config.hasWitch) return 'first-night-witch';
@@ -46,6 +50,19 @@ export function getNextFirstNightPhase(
     if (config.hasHunter) return 'first-night-hunter';
     if (config.hasIdiot) return 'first-night-idiot';
     if (config.hasBear) return 'first-night-bear';
+    if (config.hasKnight) return 'first-night-knight';
+    return 'day-result';
+  }
+
+  if (current === 'first-night-hidden-wolf') {
+    if (config.hasWolfBeauty) return 'first-night-wolf-beauty';
+    if (config.hasSeer) return 'first-night-seer';
+    if (config.hasWitch) return 'first-night-witch';
+    if (config.hasGuard) return 'first-night-guard';
+    if (config.hasHunter) return 'first-night-hunter';
+    if (config.hasIdiot) return 'first-night-idiot';
+    if (config.hasBear) return 'first-night-bear';
+    if (config.hasKnight) return 'first-night-knight';
     return 'day-result';
   }
 
@@ -56,6 +73,7 @@ export function getNextFirstNightPhase(
     if (config.hasHunter) return 'first-night-hunter';
     if (config.hasIdiot) return 'first-night-idiot';
     if (config.hasBear) return 'first-night-bear';
+    if (config.hasKnight) return 'first-night-knight';
     return 'day-result';
   }
 
@@ -65,6 +83,7 @@ export function getNextFirstNightPhase(
     if (config.hasHunter) return 'first-night-hunter';
     if (config.hasIdiot) return 'first-night-idiot';
     if (config.hasBear) return 'first-night-bear';
+    if (config.hasKnight) return 'first-night-knight';
     return 'day-result';
   }
 
@@ -73,6 +92,7 @@ export function getNextFirstNightPhase(
     if (config.hasHunter) return 'first-night-hunter';
     if (config.hasIdiot) return 'first-night-idiot';
     if (config.hasBear) return 'first-night-bear';
+    if (config.hasKnight) return 'first-night-knight';
     return 'day-result';
   }
 
@@ -80,21 +100,29 @@ export function getNextFirstNightPhase(
     if (config.hasHunter) return 'first-night-hunter';
     if (config.hasIdiot) return 'first-night-idiot';
     if (config.hasBear) return 'first-night-bear';
+    if (config.hasKnight) return 'first-night-knight';
     return 'day-result';
   }
 
   if (current === 'first-night-hunter') {
     if (config.hasIdiot) return 'first-night-idiot';
     if (config.hasBear) return 'first-night-bear';
+    if (config.hasKnight) return 'first-night-knight';
     return 'day-result';
   }
 
   if (current === 'first-night-idiot') {
     if (config.hasBear) return 'first-night-bear';
+    if (config.hasKnight) return 'first-night-knight';
     return 'day-result';
   }
 
   if (current === 'first-night-bear') {
+    if (config.hasKnight) return 'first-night-knight';
+    return 'day-result';
+  }
+
+  if (current === 'first-night-knight') {
     return 'day-result';
   }
 
@@ -109,13 +137,20 @@ export function getPrevFirstNightPhase(
     return 'first-night-wolf';
   }
 
+  if (current === 'first-night-hidden-wolf') {
+    if (config.hasWhiteWolfKing) return 'first-night-white-wolf-king';
+    return 'first-night-wolf';
+  }
+
   if (current === 'first-night-wolf-beauty') {
+    if (config.hasHiddenWolf) return 'first-night-hidden-wolf';
     if (config.hasWhiteWolfKing) return 'first-night-white-wolf-king';
     return 'first-night-wolf';
   }
 
   if (current === 'first-night-seer') {
     if (config.hasWolfBeauty) return 'first-night-wolf-beauty';
+    if (config.hasHiddenWolf) return 'first-night-hidden-wolf';
     if (config.hasWhiteWolfKing) return 'first-night-white-wolf-king';
     return 'first-night-wolf';
   }
@@ -123,6 +158,7 @@ export function getPrevFirstNightPhase(
   if (current === 'first-night-witch') {
     if (config.hasSeer) return 'first-night-seer';
     if (config.hasWolfBeauty) return 'first-night-wolf-beauty';
+    if (config.hasHiddenWolf) return 'first-night-hidden-wolf';
     if (config.hasWhiteWolfKing) return 'first-night-white-wolf-king';
     return 'first-night-wolf';
   }
@@ -131,6 +167,7 @@ export function getPrevFirstNightPhase(
     if (config.hasWitch) return 'first-night-witch';
     if (config.hasSeer) return 'first-night-seer';
     if (config.hasWolfBeauty) return 'first-night-wolf-beauty';
+    if (config.hasHiddenWolf) return 'first-night-hidden-wolf';
     if (config.hasWhiteWolfKing) return 'first-night-white-wolf-king';
     return 'first-night-wolf';
   }
@@ -140,6 +177,7 @@ export function getPrevFirstNightPhase(
     if (config.hasWitch) return 'first-night-witch';
     if (config.hasSeer) return 'first-night-seer';
     if (config.hasWolfBeauty) return 'first-night-wolf-beauty';
+    if (config.hasHiddenWolf) return 'first-night-hidden-wolf';
     if (config.hasWhiteWolfKing) return 'first-night-white-wolf-king';
     return 'first-night-wolf';
   }
@@ -150,6 +188,7 @@ export function getPrevFirstNightPhase(
     if (config.hasWitch) return 'first-night-witch';
     if (config.hasSeer) return 'first-night-seer';
     if (config.hasWolfBeauty) return 'first-night-wolf-beauty';
+    if (config.hasHiddenWolf) return 'first-night-hidden-wolf';
     if (config.hasWhiteWolfKing) return 'first-night-white-wolf-king';
     return 'first-night-wolf';
   }
@@ -161,6 +200,20 @@ export function getPrevFirstNightPhase(
     if (config.hasWitch) return 'first-night-witch';
     if (config.hasSeer) return 'first-night-seer';
     if (config.hasWolfBeauty) return 'first-night-wolf-beauty';
+    if (config.hasHiddenWolf) return 'first-night-hidden-wolf';
+    if (config.hasWhiteWolfKing) return 'first-night-white-wolf-king';
+    return 'first-night-wolf';
+  }
+
+  if (current === 'first-night-knight') {
+    if (config.hasBear) return 'first-night-bear';
+    if (config.hasIdiot) return 'first-night-idiot';
+    if (config.hasHunter) return 'first-night-hunter';
+    if (config.hasGuard) return 'first-night-guard';
+    if (config.hasWitch) return 'first-night-witch';
+    if (config.hasSeer) return 'first-night-seer';
+    if (config.hasWolfBeauty) return 'first-night-wolf-beauty';
+    if (config.hasHiddenWolf) return 'first-night-hidden-wolf';
     if (config.hasWhiteWolfKing) return 'first-night-white-wolf-king';
     return 'first-night-wolf';
   }

@@ -209,6 +209,13 @@ export default function FirstNightWitchScreen({
         </div>
       </div>
 
+      <div className="mt-4 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
+        <JudgeScriptHeader />
+        <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
+          <JudgeScriptLines lines={[{ zh: '女巫请闭眼。', en: 'Witch, please close your eyes.' }]} />
+        </div>
+      </div>
+
       <div className="flex flex-wrap gap-3 mt-5">
         <button className="px-4 py-3 rounded-xl font-bold text-sm border border-[var(--color-wolf-border-hi)] bg-[var(--color-wolf-card-alt)] text-[var(--color-moon)] cursor-pointer hover:border-[var(--color-moon-dim)] transition-colors" onClick={onBack}>
           <Bilingual zh="上一步" en="Back" small />

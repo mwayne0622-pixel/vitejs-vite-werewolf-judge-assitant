@@ -2,7 +2,7 @@ import Bilingual from '../components/Bilingual';
 import JudgeScriptHeader from '../components/JudgeScriptHeader';
 import JudgeScriptLines from '../components/JudgeScriptLines';
 import type { Player } from '../types';
-import { isWolf } from '../utils/roleUtils';
+import { isWolfToSeer } from '../utils/roleUtils';
 import PlayerSelectButton from '../components/PlayerSelectButton';
 
 type Props = {
@@ -24,7 +24,7 @@ export default function NightSeerScreen({
   onBack,
   onNext,
 }: Props) {
-  const checkedIsWolfTeam = checkedPlayer ? isWolf(checkedPlayer.role) : false;
+  const checkedIsWolfTeam = checkedPlayer ? isWolfToSeer(checkedPlayer.role) : false;
 
   return (
     <section className="bg-[var(--color-wolf-card)] rounded-2xl p-5 mb-5 shadow-[var(--shadow-card)] border border-[var(--color-wolf-border)]">
@@ -83,6 +83,13 @@ export default function NightSeerScreen({
           <span className="text-2xl">{checkedIsWolfTeam ? '👎' : '👍'}</span>
         </div>
       )}
+
+      <div className="mt-4 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
+        <JudgeScriptHeader />
+        <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
+          <JudgeScriptLines lines={[{ zh: '预言家请闭眼。', en: 'Seer, please close your eyes.' }]} />
+        </div>
+      </div>
 
       <div className="flex flex-wrap gap-3 mt-5">
         <button type="button" className="px-4 py-3 rounded-xl font-bold text-sm border border-[var(--color-wolf-border-hi)] bg-[var(--color-wolf-card-alt)] text-[var(--color-moon)] cursor-pointer hover:border-[var(--color-moon-dim)] transition-colors" onClick={onBack}>

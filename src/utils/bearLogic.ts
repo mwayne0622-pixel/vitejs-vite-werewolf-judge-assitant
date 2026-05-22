@@ -1,5 +1,5 @@
 import type { Player } from '../types';
-import { isWolf } from './roleUtils';
+import { isWolfToSeer } from './roleUtils';
 
 export type BearInfo = {
   bearPlayer: Player | null;
@@ -58,7 +58,7 @@ export function getBearInfo(players: Player[]): BearInfo | null {
   const rightNeighbor = findAliveNeighbor(sortedPlayers, bearIndex, 1);
 
   const isRoaring =
-    isWolf(leftNeighbor?.role ?? null) || isWolf(rightNeighbor?.role ?? null);
+    isWolfToSeer(leftNeighbor?.role ?? null) || isWolfToSeer(rightNeighbor?.role ?? null);
 
   return {
     bearPlayer,

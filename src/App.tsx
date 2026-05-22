@@ -31,14 +31,19 @@ import NightWolfScreen from './screens/NightWolfScreen';
 import HunterShootScreen from './screens/HunterShootScreen';
 
 import FirstNightWhiteWolfKingScreen from './screens/FirstNightWhiteWolfKingScreen';
+import FirstNightHiddenWolfScreen from './screens/FirstNightHiddenWolfScreen';
 import WhiteWolfKingExplodeScreen from './screens/WhiteWolfKingExplodeScreen';
 
 import FirstNightWolfBeautyScreen from './screens/FirstNightWolfBeautyScreen';
 import NightWolfBeautyScreen from './screens/NightWolfBeautyScreen';
 
 import FirstNightBearScreen from './screens/FirstNightBearScreen';
+import FirstNightKnightScreen from './screens/FirstNightKnightScreen';
+import KnightDuelScreen from './screens/KnightDuelScreen';
 import { getBearInfo } from './utils/bearLogic';
 import { getPhaseIcon, isNightPhase } from './utils/roleDisplay';
+import RoleHelpModal from './components/RoleHelpModal';
+import { isWolf } from './utils/roleUtils';
 import {
   shouldTriggerWolfBeautyLoverDeath,
   type WolfBeautyDeathSource,
@@ -82,6 +87,8 @@ const defaultConfig: GameConfig = {
   hasWolfBeauty: false,
   hasIdiot: false,
   hasBear: false,
+  hasKnight: false,
+  hasHiddenWolf: false,
 };
 
 // 从 gameRules 导入的类型
@@ -99,6 +106,7 @@ function calculateVoteSummary(params: {
 }
 
 export default function App() {
+  const [showHelp, setShowHelp] = useState(false);
   const [config, setConfig] = useState<GameConfig>(() => (getSavedOnce()?.config as GameConfig) ?? defaultConfig);
   const [phase, setPhase] = useState<Phase>(() => (getSavedOnce()?.phase as Phase) ?? 'setup');
   const [players, setPlayers] = useState<Player[]>(() => {
@@ -183,6 +191,16 @@ export default function App() {
   const [draftBearOwnerId, setDraftBearOwnerId] = useState<number | null>(() => (getSavedOnce()?.draftBearOwnerId as number | null) ?? null);
   const [bearOwnerId, setBearOwnerId] = useState<number | null>(() => (getSavedOnce()?.bearOwnerId as number | null) ?? null);
 
+  const [hiddenWolfOwnerId, setHiddenWolfOwnerId] = useState<number | null>(() => (getSavedOnce()?.hiddenWolfOwnerId as number | null) ?? null);
+  const [draftHiddenWolfOwnerId, setDraftHiddenWolfOwnerId] = useState<number | null>(() => (getSavedOnce()?.draftHiddenWolfOwnerId as number | null) ?? null);
+
+  const [knightOwnerId, setKnightOwnerId] = useState<number | null>(() => (getSavedOnce()?.knightOwnerId as number | null) ?? null);
+  const [draftKnightOwnerId, setDraftKnightOwnerId] = useState<number | null>(() => (getSavedOnce()?.draftKnightOwnerId as number | null) ?? null);
+  const [knightDuelUsed, setKnightDuelUsed] = useState(() => Boolean(getSavedOnce()?.knightDuelUsed));
+  const [knightDuelTargetId, setKnightDuelTargetId] = useState<number | null>(() => (getSavedOnce()?.knightDuelTargetId as number | null) ?? null);
+  const [knightDuelMessage, setKnightDuelMessage] = useState<string | null>(() => (getSavedOnce()?.knightDuelMessage as string | null) ?? null);
+  const [knightDuelEnglish, setKnightDuelEnglish] = useState<string | null>(() => (getSavedOnce()?.knightDuelEnglish as string | null) ?? null);
+
   const [gameOver, setGameOver] = useState(() => Boolean(getSavedOnce()?.gameOver));
   const [gameResult, setGameResult] = useState<string | null>(() => (getSavedOnce()?.gameResult as string | null) ?? null);
 
@@ -250,6 +268,16 @@ export default function App() {
         bearOwnerId,
         draftBearOwnerId,
 
+        hiddenWolfOwnerId,
+        draftHiddenWolfOwnerId,
+
+        knightOwnerId,
+        draftKnightOwnerId,
+        knightDuelUsed,
+        knightDuelTargetId,
+        knightDuelMessage,
+        knightDuelEnglish,
+
         gameOver,
         gameResult,
 
@@ -302,6 +330,14 @@ export default function App() {
     draftIdiotOwnerId,
     bearOwnerId,
     draftBearOwnerId,
+    hiddenWolfOwnerId,
+    draftHiddenWolfOwnerId,
+    knightOwnerId,
+    draftKnightOwnerId,
+    knightDuelUsed,
+    knightDuelTargetId,
+    knightDuelMessage,
+    knightDuelEnglish,
     gameOver,
     gameResult,
     voteRound,
@@ -317,6 +353,7 @@ export default function App() {
   const hunterRoleExists = config.hasHunter;
   const idiotRoleExists = config.hasIdiot;
   const bearRoleExists = config.hasBear;
+  const knightRoleExists = config.hasKnight;
 
   const aliveSeerExists = players.some((p) => p.alive && p.role === '预言家');
   const aliveWitchExists = players.some((p) => p.alive && p.role === '女巫');
@@ -372,8 +409,29 @@ export default function App() {
     aliveWhiteWolfKing &&
     !whiteWolfKingExploded;
 
+  const knightPlayer =
+    knightOwnerId !== null
+      ? players.find((p) => p.id === knightOwnerId) ?? null
+      : players.find((p) => p.role === '骑士') ?? null;
+
+  const canKnightDuel =
+    phase === 'day-result' &&
+    dayApplied &&
+    !voteApplied &&
+    !gameOver &&
+    !knightDuelUsed &&
+    knightPlayer !== null &&
+    knightPlayer.alive;
+
   const selectableWhiteWolfKingPlayers = players.filter(
     (p) => p.role === '狼人' || p.role === '白狼王'
+  );
+
+  // 隐狼玩家在狼人阶段不睁眼，因此未被选入 selectedWolfIds，此时 role 仍为 null
+  const selectableHiddenWolfPlayers = players.filter((p) => p.role === null);
+
+  const wolfTeamPlayers = players.filter(
+    (p) => p.role === '狼人' || p.role === '白狼王' || p.role === '狼美人'
   );
 
   const selectableWolfBeautyPlayers = players.filter(
@@ -519,6 +577,16 @@ export default function App() {
     setBearOwnerId(null);
     setDraftBearOwnerId(null);
 
+    setHiddenWolfOwnerId(null);
+    setDraftHiddenWolfOwnerId(null);
+
+    setKnightOwnerId(null);
+    setDraftKnightOwnerId(null);
+    setKnightDuelUsed(false);
+    setKnightDuelTargetId(null);
+    setKnightDuelMessage(null);
+    setKnightDuelEnglish(null);
+
     setWitchSaveUsed(false);
     setWitchPoisonUsed(false);
     setLastGuardTargetId(null);
@@ -587,6 +655,16 @@ export default function App() {
     setBearOwnerId(null);
     setDraftBearOwnerId(null);
 
+    setHiddenWolfOwnerId(null);
+    setDraftHiddenWolfOwnerId(null);
+
+    setKnightOwnerId(null);
+    setDraftKnightOwnerId(null);
+    setKnightDuelUsed(false);
+    setKnightDuelTargetId(null);
+    setKnightDuelMessage(null);
+    setKnightDuelEnglish(null);
+
     setWitchSaveUsed(false);
     setWitchPoisonUsed(false);
     setLastGuardTargetId(null);
@@ -629,6 +707,9 @@ export default function App() {
     setVoteRound(1);
     setRevoteCandidateIds([]);
     setAppliedVoteSummary(null);
+    setKnightDuelTargetId(null);
+    setKnightDuelMessage(null);
+    setKnightDuelEnglish(null);
     setPhase('night-wolf');
     setWhiteWolfKingMessage(null);
     setWhiteWolfKingEnglish(null);
@@ -694,9 +775,10 @@ export default function App() {
       finalWitchPoisonId === wolfBeautyPlayer.id &&
       dayResult.deadIds.includes(wolfBeautyPlayer.id);
 
-    const nextPlayers = wolfBeautyDiedByPoison
+    const afterBeauty = wolfBeautyDiedByPoison
       ? applyWolfBeautyLoverDeath(baseNextPlayers, 'witch-poison')
       : baseNextPlayers;
+    const nextPlayers = applyHiddenWolfBindingDeath(afterBeauty);
 
     setPlayers(nextPlayers);
 
@@ -824,9 +906,10 @@ export default function App() {
       wolfBeautyPlayer !== null &&
       latestSummary.eliminatedId === wolfBeautyPlayer.id;
 
-    const nextPlayers = wolfBeautyDiedByVote
+    const afterBeauty = wolfBeautyDiedByVote
       ? applyWolfBeautyLoverDeath(baseNextPlayers, 'vote')
       : baseNextPlayers;
+    const nextPlayers = applyHiddenWolfBindingDeath(afterBeauty);
 
     setAppliedVoteSummary(latestSummary);
     setPlayers(nextPlayers);
@@ -844,12 +927,14 @@ export default function App() {
     checkGameOver(nextPlayers);
   }
 
+  const activeWolfCount = config.wolfCount - (config.hasHiddenWolf ? 1 : 0);
+
   function toggleWolfSelection(playerId: number) {
     setSelectedWolfIds((prev) => {
       if (prev.includes(playerId)) {
         return prev.filter((id) => id !== playerId);
       }
-      if (prev.length >= config.wolfCount) {
+      if (prev.length >= activeWolfCount) {
         return prev;
       }
       return [...prev, playerId];
@@ -936,6 +1021,71 @@ export default function App() {
     { setPlayers, setRoleOwnerId: setBearOwnerId, setDraftRoleOwnerId: setDraftBearOwnerId, setPhase, setFirstNightDone }
   );
 
+  const commitHiddenWolfAndNext = createStandardRoleCommitHandler(
+    '隐狼',
+    draftHiddenWolfOwnerId,
+    config,
+    players,
+    { setPlayers, setRoleOwnerId: setHiddenWolfOwnerId, setDraftRoleOwnerId: setDraftHiddenWolfOwnerId, setPhase, setFirstNightDone }
+  );
+
+  const commitKnightAndNext = createStandardRoleCommitHandler(
+    '骑士',
+    draftKnightOwnerId,
+    config,
+    players,
+    { setPlayers, setRoleOwnerId: setKnightOwnerId, setDraftRoleOwnerId: setDraftKnightOwnerId, setPhase, setFirstNightDone }
+  );
+
+  function startKnightDuel() {
+    if (!canKnightDuel) return;
+    setKnightDuelTargetId(null);
+    setPhase('knight-duel');
+  }
+
+  function applyKnightDuel() {
+    if (knightDuelTargetId === null || knightPlayer === null || gameOver) return;
+
+    const target = players.find((p) => p.id === knightDuelTargetId);
+    if (!target) return;
+
+    setKnightDuelUsed(true);
+
+    if (isWolf(target.role)) {
+      const base = players.map((p) =>
+        p.id === target.id ? { ...p, alive: false } : p
+      );
+      const nextPlayers = applyHiddenWolfBindingDeath(base);
+      setKnightDuelMessage(`骑士决斗成功：${target.seat}号（${target.role}）被刺杀出局，白天立即结束`);
+      setKnightDuelEnglish(`Knight duel success: Seat ${target.seat} (${target.role}) slain. Day ends immediately.`);
+      setPlayers(nextPlayers);
+      setVoteApplied(true);
+      setAppliedVoteSummary({
+        tally: {},
+        topTargets: [],
+        maxVotes: 0,
+        eliminatedId: null,
+        isTie: false,
+        shouldRevote: false,
+        message: '骑士决斗成功，本日跳过投票',
+        english: 'Knight duel succeeded. Voting is skipped today.',
+      });
+      setKnightDuelTargetId(null);
+      setPhase('day-result');
+      checkGameOver(nextPlayers);
+    } else {
+      const nextPlayers = players.map((p) =>
+        p.id === knightPlayer.id ? { ...p, alive: false } : p
+      );
+      setKnightDuelMessage(`骑士决斗失败：骑士 ${knightPlayer.seat}号 出局，白天继续发言投票`);
+      setKnightDuelEnglish(`Knight duel failed: Knight (Seat ${knightPlayer.seat}) eliminated. Day speech and voting continue.`);
+      setPlayers(nextPlayers);
+      setKnightDuelTargetId(null);
+      setPhase('day-result');
+      checkGameOver(nextPlayers);
+    }
+  }
+
   function startWhiteWolfKingExplode() {
     if (!canWhiteWolfKingExplode || whiteWolfKingPlayer === null) return;
 
@@ -974,9 +1124,10 @@ export default function App() {
       wolfBeautyPlayer !== null &&
       hunterShotTargetId === wolfBeautyPlayer.id;
 
-    const nextPlayers = wolfBeautyDiedByHunterShot
+    const afterBeauty = wolfBeautyDiedByHunterShot
       ? applyWolfBeautyLoverDeath(baseNextPlayers, 'hunter-shot')
       : baseNextPlayers;
+    const nextPlayers = applyHiddenWolfBindingDeath(afterBeauty);
 
     setPlayers(nextPlayers);
 
@@ -1002,7 +1153,7 @@ export default function App() {
       players.find((player) => player.id === whiteWolfKingExplodeTargetId) ??
       null;
 
-    const nextPlayers = players.map((player) => {
+    const baseNextPlayers = players.map((player) => {
       if (
         player.id === whiteWolfKingPlayer.id ||
         player.id === whiteWolfKingExplodeTargetId
@@ -1011,6 +1162,7 @@ export default function App() {
       }
       return player;
     });
+    const nextPlayers = applyHiddenWolfBindingDeath(baseNextPlayers);
 
     if (explodeTarget) {
       setWhiteWolfKingMessage(
@@ -1057,8 +1209,22 @@ export default function App() {
     return false;
   }
 
+  // 捆绑死亡：场上所有非隐狼的狼人全部出局时，隐狼自动死亡
+  function applyHiddenWolfBindingDeath(currentPlayers: Player[]): Player[] {
+    if (!config.hasHiddenWolf || hiddenWolfOwnerId === null) return currentPlayers;
+    const hiddenWolf = currentPlayers.find((p) => p.id === hiddenWolfOwnerId);
+    if (!hiddenWolf?.alive) return currentPlayers;
+    const otherWolvesAlive = currentPlayers.some(
+      (p) => p.alive && p.id !== hiddenWolfOwnerId && isWolf(p.role)
+    );
+    if (otherWolvesAlive) return currentPlayers;
+    return currentPlayers.map((p) =>
+      p.id === hiddenWolfOwnerId ? { ...p, alive: false } : p
+    );
+  }
+
   const firstNightWolfReady =
-    selectedWolfIds.length === config.wolfCount && wolfTargetId !== null;
+    selectedWolfIds.length === activeWolfCount && wolfTargetId !== null;
 
   const firstNightWhiteWolfKingReady =
     !config.hasWhiteWolfKing || draftWhiteWolfKingOwnerId !== null;
@@ -1072,6 +1238,11 @@ export default function App() {
     !hunterRoleExists || draftHunterOwnerId !== null;
   const firstNightBearReady =
     !bearRoleExists || draftBearOwnerId !== null;
+
+  const firstNightKnightReady =
+    !knightRoleExists || draftKnightOwnerId !== null;
+
+  const firstNightHiddenWolfReady = !config.hasHiddenWolf || draftHiddenWolfOwnerId !== null;
 
   const blockSelfSave =
     firstNightDone &&
@@ -1091,12 +1262,20 @@ export default function App() {
           {/* top accent line */}
           <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-[var(--color-blood)] to-transparent" />
           <div className="px-5 py-5 text-center">
-            <div className="flex items-center justify-center gap-3">
+            <div className="flex items-center justify-center gap-3 relative">
               <span className="text-2xl select-none">🐺</span>
               <h1 className="text-2xl font-black tracking-[0.15em] text-[var(--color-moon-bright)] uppercase" style={{ fontFamily: 'system-ui, sans-serif' }}>
                 狼人杀
               </h1>
               <span className="text-2xl select-none">🐺</span>
+              <button
+                type="button"
+                onClick={() => setShowHelp(true)}
+                className="absolute right-0 border border-[var(--color-wolf-border-hi)] text-[var(--color-moon-dim)] hover:text-[var(--color-moon-bright)] hover:border-[var(--color-moon-dim)] px-2.5 py-1 rounded-full text-xs font-semibold transition-colors cursor-pointer"
+                aria-label="角色说明"
+              >
+                ？角色
+              </button>
             </div>
             <div className="mt-1 text-[11px] font-semibold tracking-[0.3em] uppercase text-[var(--color-blood)] opacity-80">
               WEREWOLF · JUDGE · ASSISTANT
@@ -1126,7 +1305,7 @@ export default function App() {
             ? 'bg-[#0e0b1f] border-[#3730a3]'
             : phase === 'day-result' || phase === 'day-vote'
               ? 'bg-[var(--color-amber-dim)] border-[var(--color-amber-border)]'
-              : phase === 'hunter-shoot' || phase === 'white-wolf-king-explode'
+              : phase === 'hunter-shoot' || phase === 'white-wolf-king-explode' || phase === 'knight-duel'
                 ? 'bg-[var(--color-blood-dim)] border-[var(--color-blood)]'
                 : 'bg-[var(--color-wolf-surface)] border-[var(--color-wolf-border)]'
         }`}>
@@ -1135,7 +1314,7 @@ export default function App() {
             <div className={`font-bold text-sm tracking-wide ${
               isNightPhase(phase) ? 'text-[#818cf8]'
               : phase === 'day-result' || phase === 'day-vote' ? 'text-[#fde68a]'
-              : phase === 'hunter-shoot' || phase === 'white-wolf-king-explode' ? 'text-[var(--color-dead-text)]'
+              : phase === 'hunter-shoot' || phase === 'white-wolf-king-explode' || phase === 'knight-duel' ? 'text-[var(--color-dead-text)]'
               : 'text-[var(--color-moon-bright)]'
             }`}>
               {getPhaseLabel(phase)}
@@ -1165,7 +1344,8 @@ export default function App() {
         {phase === 'first-night-wolf' && (
           <FirstNightWolfScreen
             players={players}
-            wolfCount={config.wolfCount}
+            wolfCount={activeWolfCount}
+            hasHiddenWolf={config.hasHiddenWolf}
             selectedWolfIds={selectedWolfIds}
             wolfTargetId={wolfTargetId}
             canGoNext={firstNightWolfReady}
@@ -1186,6 +1366,18 @@ export default function App() {
               setPhase(getPrevFirstNightPhase(config, 'first-night-white-wolf-king'))
             }
             onNext={commitWhiteWolfKingAndNext}
+          />
+        )}
+
+        {phase === 'first-night-hidden-wolf' && config.hasHiddenWolf && (
+          <FirstNightHiddenWolfScreen
+            selectablePlayers={selectableHiddenWolfPlayers}
+            wolfTeamPlayers={wolfTeamPlayers}
+            draftHiddenWolfOwnerId={draftHiddenWolfOwnerId}
+            canGoNext={firstNightHiddenWolfReady}
+            onSelectHiddenWolf={setDraftHiddenWolfOwnerId}
+            onBack={() => setPhase(getPrevFirstNightPhase(config, 'first-night-hidden-wolf'))}
+            onNext={commitHiddenWolfAndNext}
           />
         )}
 
@@ -1302,6 +1494,18 @@ export default function App() {
           />
         )}
 
+        {phase === 'first-night-knight' && knightRoleExists && (
+          <FirstNightKnightScreen
+            players={players}
+            draftKnightOwnerId={draftKnightOwnerId}
+            selectablePlayers={players.filter((p) => p.role === null)}
+            canGoNext={firstNightKnightReady}
+            onSelectKnight={setDraftKnightOwnerId}
+            onBack={() => setPhase(getPrevFirstNightPhase(config, 'first-night-knight'))}
+            onNext={commitKnightAndNext}
+          />
+        )}
+
         {phase === 'night-wolf' && (
           <NightWolfScreen
             alivePlayers={alivePlayers}
@@ -1393,6 +1597,10 @@ export default function App() {
             whiteWolfKingMessage={whiteWolfKingMessage}
             whiteWolfKingEnglish={whiteWolfKingEnglish}
             onStartWhiteWolfKingExplode={startWhiteWolfKingExplode}
+            canKnightDuel={canKnightDuel}
+            knightDuelMessage={knightDuelMessage}
+            knightDuelEnglish={knightDuelEnglish}
+            onStartKnightDuel={startKnightDuel}
           />
         )}
 
@@ -1421,6 +1629,17 @@ export default function App() {
           />
         )}
 
+        {phase === 'knight-duel' && knightPlayer !== null && (
+          <KnightDuelScreen
+            knightPlayer={knightPlayer}
+            duelTargets={alivePlayers.filter((p) => p.id !== knightPlayer.id)}
+            selectedTargetId={knightDuelTargetId}
+            onSelectTarget={setKnightDuelTargetId}
+            onConfirm={applyKnightDuel}
+            onCancel={() => setPhase('day-result')}
+          />
+        )}
+
         {phase === 'white-wolf-king-explode' && whiteWolfKingPlayer !== null && (
           <WhiteWolfKingExplodeScreen
             whiteWolfKingPlayer={whiteWolfKingPlayer}
@@ -1431,6 +1650,8 @@ export default function App() {
             onConfirm={confirmWhiteWolfKingExplode}
           />
         )}
+
+        {showHelp && <RoleHelpModal onClose={() => setShowHelp(false)} />}
       </div>
     </div>
   );
@@ -1481,12 +1702,18 @@ function getPhaseLabel(phase: Phase) {
       return '第一夜：白痴';
     case 'first-night-white-wolf-king':
       return '第一夜：白狼王';
+    case 'first-night-hidden-wolf':
+      return '第一夜：隐狼';
     case 'white-wolf-king-explode':
       return '白狼王自爆';
     case 'first-night-wolf-beauty':
       return '第一夜：狼美人';
     case 'night-wolf-beauty':
       return '夜晚：狼美人魅惑';
+    case 'first-night-knight':
+      return '第一夜：骑士';
+    case 'knight-duel':
+      return '骑士决斗';
     default:
       return phase;
   }
@@ -1526,12 +1753,18 @@ function getPhaseEnglish(phase: Phase) {
       return 'Current phase: First night - Idiot';
     case 'first-night-white-wolf-king':
       return 'Current phase: First night - White Wolf King';
+    case 'first-night-hidden-wolf':
+      return 'Current phase: First night - Hidden Wolf';
     case 'white-wolf-king-explode':
       return 'Current phase: White Wolf King explodes';
     case 'first-night-wolf-beauty':
       return 'Current phase: First night - Wolf Beauty';
     case 'night-wolf-beauty':
       return 'Current phase: Night - Wolf Beauty charms';
+    case 'first-night-knight':
+      return 'Current phase: First night - Knight';
+    case 'knight-duel':
+      return 'Current phase: Knight duel';
     default:
       return phase;
   }

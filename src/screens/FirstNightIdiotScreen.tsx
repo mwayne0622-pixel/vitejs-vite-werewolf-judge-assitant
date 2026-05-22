@@ -74,6 +74,13 @@ export default function FirstNightIdiotScreen({
         </div>
       </div>
 
+      <div className="mt-4 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
+        <JudgeScriptHeader />
+        <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
+          <JudgeScriptLines lines={[{ zh: '白痴请闭眼。', en: 'Idiot, please close your eyes.' }]} />
+        </div>
+      </div>
+
       <div className="mt-4 p-3.5 rounded-xl bg-[var(--color-amber-dim)] border border-[var(--color-amber-border)] text-[var(--color-amber-wolf)] text-xs mb-3">
         <Bilingual
           zh="白痴仅在白天投票被放逐时可翻牌免于出局；若夜晚死亡、被猎人带走或被白狼王自爆带走，则直接死亡。"

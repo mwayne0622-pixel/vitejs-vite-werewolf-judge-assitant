@@ -1,6 +1,7 @@
 type JudgeScriptLine = {
   zh: string;
   en?: string;
+  noTts?: boolean;
 };
 
 type Props = {
@@ -30,15 +31,17 @@ export default function JudgeScriptLines({ lines }: Props) {
         <div key={`${line.zh}-${index}`} className="leading-relaxed">
           <div className="flex items-center gap-2">
             <span>{line.zh}</span>
-            <button
-              type="button"
-              className="px-1.5 py-0.5 rounded-md border border-[#6366f1] text-xs text-[#a5b4fc] hover:bg-[#312e81] transition-colors"
-              aria-label={`朗读：${line.zh}`}
-              title="朗读中文"
-              onClick={() => speakChinese(line.zh)}
-            >
-              🔊
-            </button>
+            {!line.noTts && (
+              <button
+                type="button"
+                className="px-1.5 py-0.5 rounded-md border border-[#6366f1] text-xs text-[#a5b4fc] hover:bg-[#312e81] transition-colors"
+                aria-label={`朗读：${line.zh}`}
+                title="朗读中文"
+                onClick={() => speakChinese(line.zh)}
+              >
+                🔊
+              </button>
+            )}
           </div>
           {line.en && (
             <div className="text-xs text-[var(--color-moon-dim)] mt-0.5">{line.en}</div>

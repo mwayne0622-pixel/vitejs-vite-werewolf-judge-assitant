@@ -42,6 +42,10 @@ type Props = {
   whiteWolfKingMessage: string | null;
   whiteWolfKingEnglish: string | null;
   onStartWhiteWolfKingExplode: () => void;
+  canKnightDuel: boolean;
+  knightDuelMessage: string | null;
+  knightDuelEnglish: string | null;
+  onStartKnightDuel: () => void;
   onBack: () => void;
   onGoToVote: () => void;
   onStartNextNight: () => void;
@@ -71,6 +75,10 @@ export default function DayResultScreen({
   whiteWolfKingMessage,
   whiteWolfKingEnglish,
   onStartWhiteWolfKingExplode,
+  canKnightDuel,
+  knightDuelMessage,
+  knightDuelEnglish,
+  onStartKnightDuel,
   onBack,
   onGoToVote,
   onStartNextNight,
@@ -182,6 +190,12 @@ export default function DayResultScreen({
                   <Bilingual zh={wolfBeautyLoverMessage} en={wolfBeautyLoverEnglish ?? ''} small />
                 </div>
               )}
+
+              {knightDuelMessage && (
+                <div className="flex items-start gap-2">
+                  <Bilingual zh={knightDuelMessage} en={knightDuelEnglish ?? ''} small />
+                </div>
+              )}
             </>
           )}
         </div>
@@ -243,6 +257,16 @@ export default function DayResultScreen({
         >
           <Bilingual zh="进入投票" en="Go to voting" small />
         </button>
+
+        {canKnightDuel && (
+          <button
+            type="button"
+            className="px-4 py-3 rounded-xl font-bold text-sm border-none bg-[#4c1d95] text-[#e9d5ff] cursor-pointer hover:bg-[#5b21b6] transition-all"
+            onClick={onStartKnightDuel}
+          >
+            <Bilingual zh="骑士发动决斗" en="Knight: Duel!" small />
+          </button>
+        )}
 
         <button
           className={`px-4 py-3 rounded-xl font-bold text-sm border-none cursor-pointer transition-all ${canStartNextNight ? 'bg-[#0f3d3e] text-[#d7fffb] hover:bg-[#145255]' : 'bg-[var(--color-wolf-card-alt)] text-[var(--color-moon-dim)] cursor-not-allowed opacity-50'}`}

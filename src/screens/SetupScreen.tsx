@@ -83,8 +83,10 @@ export default function SetupScreen({
           {[
             { label: `熊：${config.hasBear ? '开启' : '关闭'}`, on: config.hasBear },
             { label: `白痴：${config.hasIdiot ? '开启' : '关闭'}`, on: config.hasIdiot },
+            { label: `骑士：${config.hasKnight ? '开启' : '关闭'}`, on: config.hasKnight },
             { label: `白狼王：${config.hasWhiteWolfKing ? '开启' : '关闭'}`, on: config.hasWhiteWolfKing },
             { label: `狼美人：${config.hasWolfBeauty ? '开启' : '关闭'}`, on: config.hasWolfBeauty },
+            { label: `隐狼：${config.hasHiddenWolf ? '开启' : '关闭'}`, on: config.hasHiddenWolf },
           ].map(({ label, on }) => (
             <span key={label} className={`px-2.5 py-1 rounded-full text-xs border ${on ? 'border-[var(--color-blood)] text-[var(--color-moon-bright)]' : 'border-[var(--color-wolf-border)] text-[var(--color-moon-dim)]'}`}>
               {label}
@@ -130,6 +132,7 @@ export default function SetupScreen({
             <CheckboxCard checked={config.hasHunter} onChange={(v) => onUpdateConfig({ hasHunter: v })} zh="猎人" en="Hunter" />
             <CheckboxCard checked={config.hasBear} onChange={(v) => onUpdateConfig({ hasBear: v })} zh="熊" en="Bear" />
             <CheckboxCard checked={config.hasIdiot} onChange={(v) => onUpdateConfig({ hasIdiot: v })} zh="白痴" en="Idiot" />
+            <CheckboxCard checked={config.hasKnight} onChange={(v) => onUpdateConfig({ hasKnight: v })} zh="骑士" en="Knight" />
           </div>
         </div>
 
@@ -140,6 +143,7 @@ export default function SetupScreen({
           <div className="flex flex-wrap gap-2">
             <CheckboxCard checked={config.hasWhiteWolfKing} onChange={(v) => onUpdateConfig({ hasWhiteWolfKing: v })} zh="白狼王" en="White Wolf King" />
             <CheckboxCard checked={config.hasWolfBeauty} onChange={(v) => onUpdateConfig({ hasWolfBeauty: v })} zh="狼美人" en="Wolf Beauty" />
+            <CheckboxCard checked={config.hasHiddenWolf} onChange={(v) => onUpdateConfig({ hasHiddenWolf: v })} zh="隐狼" en="Hidden Wolf" />
           </div>
         </div>
       </div>

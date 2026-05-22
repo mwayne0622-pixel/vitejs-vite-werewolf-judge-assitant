@@ -2,7 +2,7 @@ import Bilingual from '../components/Bilingual';
 import JudgeScriptHeader from '../components/JudgeScriptHeader';
 import JudgeScriptLines from '../components/JudgeScriptLines';
 import type { Player } from '../types';
-import { isWolf } from '../utils/roleUtils';
+import { isWolfToSeer } from '../utils/roleUtils';
 import PlayerSelectButton from '../components/PlayerSelectButton';
 
 type Props = {
@@ -31,7 +31,7 @@ export default function FirstNightSeerScreen({
   onNext,
 }: Props) {
   const checkedPlayer = players.find((p) => p.id === seerCheckId);
-  const checkedIsWolfTeam = checkedPlayer ? isWolf(checkedPlayer.role) : false;
+  const checkedIsWolfTeam = checkedPlayer ? isWolfToSeer(checkedPlayer.role) : false;
 
   function speakSeerLine(text: string) {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
@@ -120,6 +120,13 @@ export default function FirstNightSeerScreen({
           <span className="text-2xl">{checkedIsWolfTeam ? '👎' : '👍'}</span>
         </div>
       )}
+
+      <div className="mt-4 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
+        <JudgeScriptHeader />
+        <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
+          <JudgeScriptLines lines={[{ zh: '预言家请闭眼。', en: 'Seer, please close your eyes.' }]} />
+        </div>
+      </div>
 
       <div className="flex flex-wrap gap-3 mt-5">
         <button

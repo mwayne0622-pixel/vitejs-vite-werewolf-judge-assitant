@@ -7,6 +7,7 @@ import type { Player } from '../types';
 type Props = {
   players: Player[];
   wolfCount: number;
+  hasHiddenWolf: boolean;
   selectedWolfIds: number[];
   wolfTargetId: number | null;
   canGoNext: boolean;
@@ -18,6 +19,7 @@ type Props = {
 export default function FirstNightWolfScreen({
   players,
   wolfCount,
+  hasHiddenWolf,
   selectedWolfIds,
   wolfTargetId,
   canGoNext,
@@ -55,7 +57,14 @@ export default function FirstNightWolfScreen({
           <JudgeScriptLines
             lines={[
               { zh: '天黑请闭眼。', en: 'Night falls, everyone close your eyes.' },
-              { zh: '狼人请睁眼。', en: 'Wolves, please open your eyes.' },
+              {
+                zh: hasHiddenWolf
+                  ? '狼人请睁眼（隐狼不要睁眼）。'
+                  : '狼人请睁眼。',
+                en: hasHiddenWolf
+                  ? 'Wolves, please open your eyes (Hidden Wolf, keep your eyes closed).'
+                  : 'Wolves, please open your eyes.',
+              },
             ]}
           />
         </div>
@@ -99,6 +108,13 @@ export default function FirstNightWolfScreen({
               onClick={() => handleSetWolfTarget(player.id)}
             />
           ))}
+        </div>
+      </div>
+
+      <div className="mt-4 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
+        <JudgeScriptHeader />
+        <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
+          <JudgeScriptLines lines={[{ zh: '狼人请闭眼。', en: 'Wolves, please close your eyes.' }]} />
         </div>
       </div>
 

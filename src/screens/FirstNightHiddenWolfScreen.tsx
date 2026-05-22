@@ -5,45 +5,26 @@ import type { Player } from '../types';
 import PlayerSelectButton from '../components/PlayerSelectButton';
 
 type Props = {
-  players: Player[];
   selectablePlayers: Player[];
-  draftWhiteWolfKingOwnerId: number | null;
+  wolfTeamPlayers: Player[];
+  draftHiddenWolfOwnerId: number | null;
   canGoNext: boolean;
-  onSelectWhiteWolfKing: (playerId: number) => void;
+  onSelectHiddenWolf: (playerId: number) => void;
   onBack: () => void;
   onNext: () => void;
 };
 
-export default function FirstNightWhiteWolfKingScreen({
-  players: _players,
+export default function FirstNightHiddenWolfScreen({
   selectablePlayers,
-  draftWhiteWolfKingOwnerId,
+  wolfTeamPlayers,
+  draftHiddenWolfOwnerId,
   canGoNext,
-  onSelectWhiteWolfKing,
+  onSelectHiddenWolf,
   onBack,
   onNext,
 }: Props) {
-  function playWhiteWolfKingVoiceEffect() {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return;
-
-    const utterance = new SpeechSynthesisUtterance('白狼王来了，今夜由我主宰。');
-    utterance.lang = 'zh-CN';
-    utterance.rate = 0.9;
-    utterance.pitch = 0.88;
-    utterance.volume = 1;
-
-    const voices = window.speechSynthesis.getVoices();
-    const zhVoice = voices.find((voice) => voice.lang.toLowerCase().startsWith('zh'));
-    if (zhVoice) utterance.voice = zhVoice;
-
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-  }
-
-  function handleSelectWhiteWolfKing(playerId: number) {
-    onSelectWhiteWolfKing(playerId);
-    playWhiteWolfKingVoiceEffect();
-  }
+  const wolfSeatList = wolfTeamPlayers.map((p) => `${p.seat}号`).join('、');
+  const wolfSeatListEn = wolfTeamPlayers.map((p) => `Seat ${p.seat}`).join(', ');
 
   return (
     <section className="bg-[var(--color-wolf-card)] rounded-2xl p-5 mb-5 shadow-[var(--shadow-card)] border border-[var(--color-wolf-border)]">
@@ -52,7 +33,7 @@ export default function FirstNightWhiteWolfKingScreen({
         <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
           <JudgeScriptLines
             lines={[
-              { zh: '白狼王请睁眼。', en: 'White Wolf King, please open your eyes.' },
+              { zh: '隐狼请睁眼，确认你的隐狼身份。', en: 'Hidden Wolf, please open your eyes and confirm your identity.' },
             ]}
           />
         </div>
@@ -60,32 +41,57 @@ export default function FirstNightWhiteWolfKingScreen({
 
       <div className="mt-4">
         <div className="text-[var(--color-moon-dim)] text-xs mb-3">
-          <Bilingual zh="当前狼人名单" en="Current wolf list" small />
+          <Bilingual zh="从未认领狼人身份的玩家中选择隐狼" en="Select the Hidden Wolf from players who did not claim wolf identity" small />
         </div>
         <div className="flex flex-wrap gap-2">
           {selectablePlayers.map((player) => {
-            const selected = draftWhiteWolfKingOwnerId === player.id;
+            const selected = draftHiddenWolfOwnerId === player.id;
             return (
               <PlayerSelectButton
                 key={player.id}
                 player={player}
                 selected={selected}
-                onClick={() => handleSelectWhiteWolfKing(player.id)}
+                onClick={() => onSelectHiddenWolf(player.id)}
               />
             );
           })}
         </div>
       </div>
 
+      {wolfTeamPlayers.length > 0 && (
+        <div className="mt-4 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
+          <JudgeScriptHeader />
+          <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
+            <JudgeScriptLines
+              lines={[
+                {
+                  zh: `（低声）你的狼队友是：${wolfSeatList}。他们不知道你是隐狼。`,
+                  en: `(Quietly) Your wolf teammates are: ${wolfSeatListEn}. They do not know you are the Hidden Wolf.`,
+                  noTts: true,
+                },
+              ]}
+            />
+          </div>
+        </div>
+      )}
+
       <div className="mt-4 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
         <JudgeScriptHeader />
         <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
-          <JudgeScriptLines lines={[{ zh: '白狼王请闭眼。', en: 'White Wolf King, please close your eyes.' }]} />
+          <JudgeScriptLines
+            lines={[
+              { zh: '隐狼请闭眼。', en: 'Hidden Wolf, please close your eyes.' },
+            ]}
+          />
         </div>
       </div>
 
       <div className="flex flex-wrap gap-3 mt-5">
-        <button type="button" className="px-4 py-3 rounded-xl font-bold text-sm border border-[var(--color-wolf-border-hi)] bg-[var(--color-wolf-card-alt)] text-[var(--color-moon)] cursor-pointer hover:border-[var(--color-moon-dim)] transition-colors" onClick={onBack}>
+        <button
+          type="button"
+          className="px-4 py-3 rounded-xl font-bold text-sm border border-[var(--color-wolf-border-hi)] bg-[var(--color-wolf-card-alt)] text-[var(--color-moon)] cursor-pointer hover:border-[var(--color-moon-dim)] transition-colors"
+          onClick={onBack}
+        >
           <Bilingual zh="返回" en="Back" small />
         </button>
         <button
@@ -94,7 +100,7 @@ export default function FirstNightWhiteWolfKingScreen({
           disabled={!canGoNext}
           onClick={onNext}
         >
-          <Bilingual zh="下一步" en="Next" small />
+          <Bilingual zh="确认身份，下一步" en="Confirm & Next" small />
         </button>
       </div>
     </section>

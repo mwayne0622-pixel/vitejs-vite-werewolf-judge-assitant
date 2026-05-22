@@ -71,6 +71,13 @@ export default function NightWolfScreen({
         })}
       </div>
 
+      <div className="mt-4 p-4 rounded-xl bg-[#0e0b1f] border border-[#3730a3]">
+        <JudgeScriptHeader />
+        <div className="text-[var(--color-moon-bright)] font-semibold leading-relaxed">
+          <JudgeScriptLines lines={[{ zh: '狼人请闭眼。', en: 'Wolves, please close your eyes.' }]} />
+        </div>
+      </div>
+
       <div className="flex flex-wrap gap-3 mt-5">
         <button
           type="button"

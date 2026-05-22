@@ -29,6 +29,8 @@ export function createStandardRoleCommitHandler(
       '猎人': 'first-night-hunter',
       '白痴': 'first-night-idiot',
       '熊': 'first-night-bear',
+      '骑士': 'first-night-knight',
+      '隐狼': 'first-night-hidden-wolf',
       '狼人': 'first-night-wolf', // 不会用到
       '白狼王': 'first-night-white-wolf-king', // 不会用到
       '狼美人': 'first-night-wolf-beauty', // 不会用到
@@ -93,11 +95,7 @@ export function createWolvesCommitHandler(
 
     callbacks.setPlayers(() => nextPlayers);
 
-    const nextPhase = config.hasWhiteWolfKing
-      ? 'first-night-white-wolf-king'
-      : config.hasWolfBeauty
-        ? 'first-night-wolf-beauty'
-        : getNextFirstNightPhase(config, 'first-night-wolf');
+    const nextPhase = getNextFirstNightPhase(config, 'first-night-wolf');
 
     callbacks.setPhase(nextPhase);
   };
